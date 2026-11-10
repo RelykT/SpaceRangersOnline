@@ -1,10 +1,11 @@
-import { FACTION_COLOR, FACTION_ENGINE, PLAYER_COLOR } from '../sim/content';
+import { FACTION_COLOR } from '../sim/content';
 import { computeFit } from '../sim/fitting';
 import { Y_SQUASH, worldToScreen, type Camera } from '../input/pick';
 import { unit } from '../sim/rng';
 import type { FactionId, Pilot, World } from '../sim/types';
+import { cover, menuNebula, menuPlanet, planetImage, ready, ringImage, splashImage, stationImage, systemImage } from './art';
 import { getQuality, type Quality } from './quality';
-import { paintShipAura, shipCanvas } from './ships';
+import { drawCraft } from './ships';
 
 export interface ShipSample {
   id: string;
@@ -161,16 +162,27 @@ export function paintFrame(ctx: CanvasRenderingContext2D, w: number, h: number):
 }
 
 export function drawSplash(ctx: CanvasRenderingContext2D, w: number, h: number, time: number): void {
-  paintFrame(ctx, w, h);
-  paintNebula(ctx, w, h, 3);
-  paintStars(ctx, 11, 0.2, { x: time * 40, y: time * 8, zoom: 1, viewW: w, viewH: h });
+  const plate = splashImage();
+  if (ready(plate)) cover(ctx, plate, w, h, -time * 18, 0);
+  else paintFrame(ctx, w, h);
+  paintStars(ctx, 11, 0.15, { x: time * 40, y: time * 8, zoom: 1, viewW: w, viewH: h });
   const fly = Math.min(1, time / 3.2);
-  ctx.save();
-  ctx.translate(w * (0.15 + fly * 0.7), h * 0.48);
-  ctx.rotate(-0.2);
-  const sprite = shipCanvas('oplot', '#e0b565', -0.3, 'kvissae');
-  ctx.drawImage(sprite, -70, -70, 140, 140);
-  ctx.restore();
+  drawCraft(ctx, {
+    id: 'splash',
+    x: w * (0.18 + fly * 0.64),
+    y: h * 0.42,
+    heading: -0.15,
+    faction: 'kvissae',
+    hullId: 'klinok',
+    size: Math.min(220, w * 0.22),
+    time,
+    combat: false,
+    hullFrac: 1,
+    shieldFrac: 1,
+    flash: false,
+    lightX: -40,
+    lightY: -30,
+  });
   ctx.save();
   ctx.globalAlpha = Math.min(1, time * 0.8);
   ctx.fillStyle = '#e0b565';
@@ -184,8 +196,9 @@ export function drawSplash(ctx: CanvasRenderingContext2D, w: number, h: number, 
 }
 
 export function drawMenu(ctx: CanvasRenderingContext2D, w: number, h: number, time: number): void {
-  paintFrame(ctx, w, h);
-  paintNebula(ctx, w, h, 9);
+  const nebula = menuNebula();
+  if (ready(nebula)) cover(ctx, nebula, w, h, -((time * 14) % 80), Math.sin(time * 0.15) * 12);
+  else paintFrame(ctx, w, h);
   paintStars(ctx, 4, 0.12, { x: time * 18, y: time * 4, zoom: 1, viewW: w, viewH: h });
   paintStars(ctx, 8, 0.4, { x: time * 46, y: time * 9, zoom: 1, viewW: w, viewH: h });
   const dust = q().name === 'low' ? 18 : 46;
@@ -216,47 +229,59 @@ export function drawMenu(ctx: CanvasRenderingContext2D, w: number, h: number, ti
     ctx.fill();
     ctx.restore();
   }
-  drawPlanet(ctx, 'menu-world', 'garden', w * 0.78, h * 0.58, Math.min(150, w * 0.16), time * 0.35, true);
-  const fly = (offset: number, speed: number, y: number, hull: string, color: string, faction: string) => {
-    const x = ((time * speed + offset) % (w + 220)) - 160;
-    const sprite = shipCanvas(hull, color, 0.15, faction);
-    if (faction !== 'taeyori') {
-      ctx.strokeStyle = FACTION_ENGINE[faction as keyof typeof FACTION_ENGINE] ?? '#9fd4ff';
-      ctx.globalAlpha = 0.55;
-      ctx.beginPath();
-      ctx.moveTo(x - 70, y);
-      ctx.lineTo(x - 8, y);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-    }
-    ctx.drawImage(sprite, x - 28, y - 28, 64, 64);
-    paintShipAura(ctx, x, y, 64, 0.15, faction, hull, time, faction === 'omnir');
+  const planet = menuPlanet();
+  if (ready(planet)) {
+    const pw = Math.min(420, w * 0.42);
+    ctx.drawImage(planet, w * 0.58 + Math.sin(time * 0.12) * 16, h * 0.18 + Math.cos(time * 0.1) * 10, pw, pw);
+  }
+  const fly = (offset: number, speed: number, y: number, hull: string, faction: string) => {
+    const x = ((time * speed + offset) % (w + 280)) - 180;
+    drawCraft(ctx, {
+      id: `menu-${faction}-${hull}`,
+      x,
+      y,
+      heading: 0.05,
+      faction,
+      hullId: hull,
+      size: 120,
+      time,
+      combat: faction === 'omnir',
+      hullFrac: 1,
+      shieldFrac: 1,
+      flash: false,
+      lightX: -30,
+      lightY: -20,
+    });
   };
-  fly(40, 46, h * 0.28, 'iskra', '#8fb4d8', 'human');
-  fly(280, 34, h * 0.58, 'oplot', FACTION_COLOR.zhargi, 'zhargi');
-  fly(520, 40, h * 0.18, 'korob', FACTION_COLOR.kvissae, 'kvissae');
-  fly(760, 28, h * 0.42, 'monolit', FACTION_COLOR.taeyori, 'taeyori');
+  fly(40, 52, h * 0.26, 'iskra', 'human');
+  fly(320, 36, h * 0.62, 'oplot', 'zhargi');
+  fly(560, 46, h * 0.16, 'korob', 'kvissae');
+  fly(800, 30, h * 0.44, 'monolit', 'taeyori');
 }
 
-export function drawHangar(ctx: CanvasRenderingContext2D, w: number, h: number, owner: FactionId, time: number): void {
-  const g = ctx.createLinearGradient(0, 0, 0, h);
-  g.addColorStop(0, '#24344a');
-  g.addColorStop(0.55, '#121a28');
-  g.addColorStop(1, '#070b12');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, w, h);
-  ctx.fillStyle = 'rgba(0,0,0,.35)';
-  for (let i = 0; i < 6; i++) ctx.fillRect(i * (w / 5), 0, 8, h);
-  ctx.strokeStyle = FACTION_COLOR[owner];
-  ctx.globalAlpha = 0.7;
-  ctx.strokeRect(16, 16, w - 32, h - 32);
-  ctx.globalAlpha = 1;
-  const ship = shipCanvas('iskra', PLAYER_COLOR, Math.sin(time * 0.3) * 0.2, 'free');
-  ctx.drawImage(ship, w * 0.38, h * 0.15, h * 0.9, h * 0.9);
-  ctx.fillStyle = 'rgba(180,210,255,.15)';
-  ctx.beginPath();
-  ctx.ellipse(w * 0.5, h * 0.82, w * 0.22, 14, 0, 0, Math.PI * 2);
-  ctx.fill();
+export function drawHangar(ctx: CanvasRenderingContext2D, w: number, h: number, owner: FactionId, time: number, hullId = 'iskra'): void {
+  const plate = stationImage(owner);
+  if (ready(plate)) cover(ctx, plate, w, h, 0, 0);
+  else {
+    ctx.fillStyle = '#121a28';
+    ctx.fillRect(0, 0, w, h);
+  }
+  drawCraft(ctx, {
+    id: `hangar-${owner}`,
+    x: w * 0.5,
+    y: h * 0.58,
+    heading: -Math.PI / 2 + Math.sin(time * 0.25) * 0.04,
+    faction: owner === 'free' || owner === 'pirate' ? 'human' : owner,
+    hullId,
+    size: Math.min(h * 0.7, w * 0.42),
+    time,
+    combat: false,
+    hullFrac: 1,
+    shieldFrac: 1,
+    flash: false,
+    lightX: 0,
+    lightY: -1,
+  });
 }
 
 export function drawSystem(
@@ -271,8 +296,12 @@ export function drawSystem(
   const w = cam.viewW;
   const h = cam.viewH;
   const sys = world.systems.find((s) => s.id === world.player.systemId);
-  paintFrame(ctx, w, h);
-  paintNebula(ctx, w, h, (world.seed + (sys?.hue ?? 0) * 10) | 0);
+  const plate = systemImage(sys?.star ?? 'yellow');
+  if (ready(plate)) cover(ctx, plate, w, h, -((cam.x * 0.02) % 120), -((cam.y * 0.02) % 80));
+  else {
+    paintFrame(ctx, w, h);
+    paintNebula(ctx, w, h, (world.seed + (sys?.hue ?? 0) * 10) | 0);
+  }
   paintStars(ctx, world.seed + 3, 0.2, cam);
   paintStars(ctx, world.seed + 9, 0.55, cam);
   if (!sys) return;
@@ -375,26 +404,39 @@ export function drawSystem(
     const p = worldToScreen(cam, ship.x, ship.y);
     const ang = Math.atan2(ship.vy, ship.vx);
     const faction = ship.id === 'player' ? (world.player.origin?.race ?? 'human') : ship.faction;
-    const color = ship.id === 'player' ? PLAYER_COLOR : FACTION_COLOR[ship.faction];
+    const color = ship.id === 'player' ? '#9fd4ff' : FACTION_COLOR[ship.faction];
     const speed = Math.hypot(ship.vx, ship.vy);
-    if (speed > 30) {
+    if (speed > 30 && faction !== 'taeyori') {
       const hist = trails.get(ship.id) ?? [];
       hist.push({ x: p.x, y: p.y });
       while (hist.length > qual.trails) hist.shift();
       trails.set(ship.id, hist);
-      const trail = faction === 'taeyori' ? 'rgba(180,140,255,0)' : (FACTION_ENGINE[faction] ?? '#9fd4ff');
-      ctx.strokeStyle = trail;
-      ctx.globalAlpha = faction === 'taeyori' ? 0 : 0.55;
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = FACTION_COLOR[faction] ?? '#9fd4ff';
+      ctx.globalAlpha = 0.45;
+      ctx.lineWidth = 3;
       ctx.beginPath();
       hist.forEach((pt, i) => (i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y)));
       ctx.stroke();
       ctx.globalAlpha = 1;
     }
-    const sprite = shipCanvas(ship.hullId, color, ang, faction);
-    const size = ship.id === 'player' ? 54 : 44;
-    ctx.drawImage(sprite, p.x - size / 2, p.y - size / 2, size, size);
-    paintShipAura(ctx, p.x, p.y, size, ang, faction, ship.hullId, now, ship.combat);
+    const size = (ship.id === 'player' ? 1.18 : 1) * (qual.name === 'low' ? 92 : qual.name === 'high' ? 150 : 124);
+    const star = worldToScreen(cam, 0, 0);
+    drawCraft(ctx, {
+      id: ship.id,
+      x: p.x,
+      y: p.y,
+      heading: ang,
+      faction,
+      hullId: ship.hullId,
+      size,
+      time: now,
+      combat: ship.combat,
+      hullFrac: ship.hull / ship.maxHull,
+      shieldFrac: ship.shield / ship.maxShield,
+      flash: ship.combat && ship.shield > 0,
+      lightX: star.x - p.x,
+      lightY: star.y - p.y,
+    });
     bars(ctx, p.x, p.y - size * 0.45, ship);
     if (selectedId === ship.id) bracket(ctx, p.x, p.y, size * 0.45, color);
   }
@@ -418,6 +460,28 @@ export function drawSystem(
 }
 
 function drawPlanet(ctx: CanvasRenderingContext2D, id: string, type: string, x: number, y: number, rad: number, spin: number, glow: boolean): void {
+  const photo = planetImage(type);
+  if (ready(photo)) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(spin * 0.15);
+    ctx.drawImage(photo, -rad, -rad, rad * 2, rad * 2);
+    if ((type === 'gas' || type === 'ice') && glow) {
+      const ring = ringImage();
+      if (ready(ring)) ctx.drawImage(ring, -rad * 1.7, -rad * 0.55, rad * 3.4, rad * 1.1);
+    }
+    ctx.beginPath();
+    ctx.arc(0, 0, rad, 0, Math.PI * 2);
+    ctx.clip();
+    const light = ctx.createRadialGradient(-rad * 0.35, -rad * 0.35, rad * 0.1, 0, 0, rad);
+    light.addColorStop(0, 'rgba(255,255,255,.28)');
+    light.addColorStop(0.6, 'rgba(255,255,255,0)');
+    light.addColorStop(1, 'rgba(0,0,0,.35)');
+    ctx.fillStyle = light;
+    ctx.fillRect(-rad, -rad, rad * 2, rad * 2);
+    ctx.restore();
+    return;
+  }
   const sheet = planetSheet(id, type, spin, glow);
   ctx.save();
   ctx.beginPath();
@@ -519,7 +583,9 @@ function drawTunnel(ctx: CanvasRenderingContext2D, w: number, h: number, progres
 export function drawMap(ctx: CanvasRenderingContext2D, world: World, cam: Camera, selectedId: string | null, now: number): void {
   const w = cam.viewW;
   const h = cam.viewH;
-  paintFrame(ctx, w, h);
+  const plate = menuNebula();
+  if (ready(plate)) cover(ctx, plate, w, h, 0, 0);
+  else paintFrame(ctx, w, h);
   paintNebula(ctx, w, h, world.seed);
   paintStars(ctx, world.seed, 0.12, cam);
   const drawn = new Set<string>();
@@ -558,7 +624,7 @@ export function drawMap(ctx: CanvasRenderingContext2D, world: World, cam: Camera
     ctx.arc(p.x, p.y, sys.home ? 3.5 : 2.2, 0, Math.PI * 2);
     ctx.fill();
     if (sys.id === world.player.systemId) {
-      ctx.strokeStyle = PLAYER_COLOR;
+      ctx.strokeStyle = '#9fd4ff';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(p.x, p.y, 12 + Math.sin(now * 3) * 2, 0, Math.PI * 2);
@@ -577,8 +643,22 @@ export function drawMap(ctx: CanvasRenderingContext2D, world: World, cam: Camera
       const a = worldToScreen(cam, from.x, from.y);
       const b = worldToScreen(cam, to.x, to.y);
       const t = world.player.jump.progress;
-      const sprite = shipCanvas('iskra', PLAYER_COLOR, Math.atan2(b.y - a.y, b.x - a.x), 'free');
-      ctx.drawImage(sprite, a.x + (b.x - a.x) * t - 16, a.y + (b.y - a.y) * t - 16, 32, 32);
+      drawCraft(ctx, {
+        id: 'map-player',
+        x: a.x + (b.x - a.x) * t,
+        y: a.y + (b.y - a.y) * t,
+        heading: Math.atan2(b.y - a.y, b.x - a.x),
+        faction: world.player.origin?.race ?? 'human',
+        hullId: world.player.ship.hullId,
+        size: 48,
+        time: now,
+        combat: false,
+        hullFrac: 1,
+        shieldFrac: 1,
+        flash: false,
+        lightX: 0,
+        lightY: -1,
+      });
     }
   }
 }

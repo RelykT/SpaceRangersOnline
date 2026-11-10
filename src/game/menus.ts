@@ -61,7 +61,7 @@ export function wizardHtml(step: string, draft: Draft): string {
   if (step === 'race') {
     const cards = RACE_ORDER.map((race) => {
       const on = draft.race === race ? ' on' : '';
-      return `<button type="button" class="choice${on}" data-act="pick-race" data-race="${race}"><canvas class="emblem" data-race="${race}" width="42" height="42"></canvas><b>${esc(FACTION_NAME[race])}</b><span>${esc(FACTION_BLURB[race])}</span><span>${esc(RACE_INFO[race].bonus)}</span></button>`;
+      return `<button type="button" class="choice${on}" data-act="pick-race" data-race="${race}"><canvas class="face" data-race="${race}" data-face="1" width="84" height="110"></canvas><span><b>${esc(FACTION_NAME[race])}</b><span>${esc(FACTION_BLURB[race])}</span><span>${esc(RACE_INFO[race].bonus)}</span></span></button>`;
     }).join('');
     return `<div class="menu-card wide"><h2>Народ</h2><p class="sub">Шаг 1 из 4. Бонус только на старте, звание потом копится само.</p><div class="choices">${cards}</div><div class="row">${back}</div></div>`;
   }
@@ -74,7 +74,7 @@ export function wizardHtml(step: string, draft: Draft): string {
     return `<div class="menu-card wide"><h2>Старт</h2><p class="sub">Шаг 2 из 4. Это не класс навсегда: другой корпус откроется, когда освоите предыдущий.</p><div class="choices">${cards}</div><div class="row">${back}</div></div>`;
   }
   if (step === 'face') {
-    return `<div class="menu-card"><h2>Капитан</h2><p class="sub">Шаг 3 из 4. Лицо, глаза и одежда собираются слоями. Вариант ${draft.portrait}.</p><canvas id="portrait" width="180" height="230"></canvas><div class="row"><button type="button" data-act="face-prev">←</button><button type="button" data-act="roll-face">Случайный</button><button type="button" data-act="face-next">→</button></div><div class="stack"><label>Имя<input id="hero-name" maxlength="24" value="${esc(draft.name)}"></label><div class="row">${back}<button type="button" class="primary" data-act="wiz-next">Дальше</button></div></div></div>`;
+    return `<div class="menu-card"><h2>Капитан</h2><p class="sub">Шаг 3 из 4. Готовые лица народа. Вариант ${draft.portrait}.</p><canvas id="portrait" width="180" height="230"></canvas><div class="row"><button type="button" data-act="face-prev">←</button><button type="button" data-act="roll-face">Случайный</button><button type="button" data-act="face-next">→</button></div><div class="stack"><label>Имя<input id="hero-name" maxlength="24" value="${esc(draft.name)}"></label><div class="row">${back}<button type="button" class="primary" data-act="wiz-next">Дальше</button></div></div></div>`;
   }
   if (step === 'galaxy') {
     return `<div class="menu-card wide"><h2>Край</h2><p class="sub">Шаг 4 из 4.</p>${choiceRow('size', draft.size, SIZE_LABEL)}<h3>Сложность</h3>${choiceRow('difficulty', draft.difficulty, DIFF_LABEL)}<h3>Абсолют</h3>${choiceRow('invaders', draft.invaders, INVADER_LABEL)}<h3>Биржа</h3>${choiceRow('economy', draft.economy, ECON_LABEL)}<label>Зерно<input id="galaxy-seed" inputmode="numeric" value="${esc(draft.seed)}"></label><div class="row"><button type="button" data-act="roll-seed">Случайное зерно</button>${back}<button type="button" class="primary" data-act="wiz-tale">Дальше</button></div></div>`;

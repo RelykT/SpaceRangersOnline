@@ -29,6 +29,7 @@ import { stationPrice } from '../sim/economy';
 import { cargoUsed, computeFit, hullOf } from '../sim/fitting';
 import { economyVolatility, skillBonus } from '../sim/origin';
 import { loreHtml, mainMenuHtml, loadHtml, settingsHtml, wizardHtml, pilotHtml, type Draft } from './menus';
+import { preloadArt } from '../render/art';
 import { drawCareerBadge, drawEmblem, drawGoodIcon, drawModuleIcon, drawPortrait } from '../render/portrait';
 import { getQuality, qualityName, setQuality } from '../render/quality';
 import type { CareerId, Difficulty, EconomyMood, GalaxySize, InvaderMood, PlayableRace, Player } from '../sim/types';
@@ -68,6 +69,7 @@ const ORDERS: { id: string; label: string }[] = [
 ];
 
 export function startGame(root: HTMLElement): void {
+  preloadArt();
   root.innerHTML = `
     <canvas id="view"></canvas>
     <div id="hud" class="hud" hidden>
@@ -94,6 +96,7 @@ export function startGame(root: HTMLElement): void {
       </div>
       <aside id="overview" class="overview blocker"></aside>
       <div id="readout" class="readout"></div>
+      <canvas id="comms" class="comms" width="84" height="110" hidden></canvas>
       <div id="modules" class="modules blocker"></div>
     </div>
     <div id="radial" class="radial blocker" hidden></div>
@@ -172,7 +175,9 @@ export function startGame(root: HTMLElement): void {
   let lootAt = 0;
   const older = new Map<string, { x: number; y: number }>();
   const newer = new Map<string, { x: number; y: number }>();
-  const spaceCam: Camera & { follow: boolean } = { x: 0, y: 0, zoom: 0.24, viewW: 1, viewH: 1, follow: true };
+  const spaceCam: Camera & { follow: boolean } = { x: 0, y: 0, zoom: 0.38, viewW: 1, viewH: 1, follow: true };
+  let spaceZoom = 0.38;
+  let mapZoom = 0.3;
   const mapCam: Camera = { x: 0, y: 0, zoom: 0.3, viewW: 1, viewH: 1 };
 
   const queue = (command: Command) => commands.push(command);
@@ -503,7 +508,7 @@ export function startGame(root: HTMLElement): void {
       if (canvas.dataset.good) drawGoodIcon(canvas, canvas.dataset.good);
     });
     host.querySelectorAll<HTMLCanvasElement>('canvas.micon').forEach((canvas) => {
-      if (canvas.dataset.slot) drawModuleIcon(canvas, canvas.dataset.slot);
+      if (canvas.dataset.mod) drawModuleIcon(canvas, canvas.dataset.mod);
     });
   }
 
@@ -553,16 +558,24 @@ export function startGame(root: HTMLElement): void {
     mapCam.y = (minY + maxY) / 2;
     const spanX = maxX - minX + 400;
     const spanY = maxY - minY + 400;
-    mapCam.zoom = clamp(Math.min(viewW / spanX, viewH / (spanY * 0.82)) * 0.86, 0.08, 1.2);
+    mapZoom = clamp(Math.min(viewW / spanX, viewH / (spanY * 0.82)) * 0.86, 0.08, 1.2);
+    mapCam.zoom = mapZoom;
   }
 
   function zoomBy(factor: number): void {
-    const cam = activeCam();
-    const before = screenToWorld(cam, viewW / 2, viewH / 2);
-    cam.zoom = clamp(cam.zoom * factor, 0.05, 1.5);
-    const after = screenToWorld(cam, viewW / 2, viewH / 2);
-    cam.x += before.x - after.x;
-    cam.y += before.y - after.y;
+    if (mode === 'map') mapZoom = clamp(mapZoom * factor, 0.08, 1.6);
+    else spaceZoom = clamp(spaceZoom * factor, 0.08, 1.6);
+  }
+
+  function easeZoom(cam: Camera, target: number, dt: number): void {
+    const prev = cam.zoom;
+    const next = prev + (target - prev) * (1 - Math.exp(-7 * Math.max(dt, 0.016)));
+    if (Math.abs(next - prev) < 0.0004) return;
+    const mid = screenToWorld(cam, cam.viewW / 2, cam.viewH / 2);
+    cam.zoom = next;
+    const after = screenToWorld(cam, cam.viewW / 2, cam.viewH / 2);
+    cam.x += mid.x - after.x;
+    cam.y += mid.y - after.y;
   }
 
   root.addEventListener('click', (event) => {
@@ -600,7 +613,7 @@ export function startGame(root: HTMLElement): void {
       else if (act === 'face-next') draft.portrait += 1;
       else draft.portrait = Math.floor(Math.random() * 9000) + 1;
       const cap = menuEl.querySelector('h2 + p.sub');
-      if (cap) cap.textContent = `Шаг 3 из 4. Лицо, глаза и одежда собираются слоями. Вариант ${draft.portrait}.`;
+      if (cap) cap.textContent = `Шаг 3 из 4. Готовые лица народа. Вариант ${draft.portrait}.`;
       return;
     }
     if (act === 'quality') {
@@ -900,7 +913,9 @@ export function startGame(root: HTMLElement): void {
       const my = (pts[0]!.y + pts[1]!.y) / 2;
       const cam = activeCam();
       const before = screenToWorld(cam, mx, my);
-      cam.zoom = clamp(cam.zoom * (distNow / pinchDist), 0.05, 1.5);
+      cam.zoom = clamp(cam.zoom * (distNow / pinchDist), 0.08, 1.6);
+      if (mode === 'map') mapZoom = cam.zoom;
+      else spaceZoom = cam.zoom;
       const after = screenToWorld(cam, mx, my);
       cam.x += before.x - after.x - (mx - pinchX) / cam.zoom;
       cam.y += before.y - after.y - (my - pinchY) / (cam.zoom * 0.82);
@@ -941,13 +956,7 @@ export function startGame(root: HTMLElement): void {
   canvas.addEventListener('pointercancel', endPointer);
   canvas.addEventListener('wheel', (event) => {
     event.preventDefault();
-    const p = canvasPoint(event);
-    const cam = activeCam();
-    const before = screenToWorld(cam, p.x, p.y);
-    cam.zoom = clamp(cam.zoom * (event.deltaY > 0 ? 0.9 : 1.1), 0.05, 1.5);
-    const after = screenToWorld(cam, p.x, p.y);
-    cam.x += before.x - after.x;
-    cam.y += before.y - after.y;
+    zoomBy(event.deltaY > 0 ? 0.9 : 1.1);
   }, { passive: false });
 
   document.addEventListener('visibilitychange', () => {
@@ -1158,6 +1167,8 @@ export function startGame(root: HTMLElement): void {
       }
     } else acc = 0;
     resize();
+    if (mode === 'map') easeZoom(mapCam, mapZoom, dt);
+    else easeZoom(spaceCam, spaceZoom, dt);
     if (world && spaceCam.follow && mode === 'space') {
       const at = sample('player', world.player.x, world.player.y);
       const k = 1 - Math.exp(-4 * Math.max(dt, 0.016));
@@ -1183,13 +1194,34 @@ export function startGame(root: HTMLElement): void {
       const dockId = world.player.dockedAt;
       const owner = world.stations.find((s) => s.id === dockId)?.owner ?? 'free';
       const hctx = hangar.getContext('2d');
-      if (hctx) drawHangar(hctx, hangar.width, hangar.height, owner, now);
+      if (hctx) drawHangar(hctx, hangar.width, hangar.height, owner, now, world.player.ship.hullId);
     }
     if (portrait) {
       const race = pilotOpen && world?.player.origin ? world.player.origin.race : draft.race;
       const face = pilotOpen && world?.player.origin ? world.player.origin.portrait : draft.portrait;
       drawPortrait(portrait, race, face, now);
     }
+    root.querySelectorAll<HTMLCanvasElement>('canvas.gicon').forEach((node) => {
+      if (node.dataset.good) drawGoodIcon(node, node.dataset.good);
+    });
+    root.querySelectorAll<HTMLCanvasElement>('canvas.micon').forEach((node) => {
+      if (node.dataset.mod) drawModuleIcon(node, node.dataset.mod);
+    });
+    root.querySelectorAll<HTMLCanvasElement>('canvas.face').forEach((node) => {
+      const race = node.dataset.race;
+      if (race === 'human' || race === 'zhargi' || race === 'kvissae' || race === 'taeyori' || race === 'virex') {
+        drawPortrait(node, race, Number(node.dataset.face ?? 1), now);
+      }
+    });
+    const comms = root.querySelector<HTMLCanvasElement>('#comms');
+    const hailed = selected;
+    if (comms && world && mode === 'space' && hailed?.kind === 'ship' && hailed.id !== 'player') {
+      const pilot = world.pilots.find((p) => p.id === hailed.id);
+      const race = pilot?.faction;
+      const known = race === 'human' || race === 'zhargi' || race === 'kvissae' || race === 'taeyori' || race === 'virex' || race === 'omnir';
+      comms.hidden = !known;
+      if (known && race) drawPortrait(comms, race, hashFace(hailed.id), now);
+    } else if (comms) comms.hidden = true;
     if (world && mode !== 'menu') {
       paintChrome();
       paintOverview();
@@ -1289,11 +1321,11 @@ function stationHtml(world: World, stationId: string, tab: string, fitSlot: numb
     const slots = layout.map((slot, index) => {
       const id = world.player.ship.modules[index];
       const def = id ? MODULE_BY_ID[id] : undefined;
-      return `<div class="slot"><canvas class="micon" data-slot="${slot}" width="32" height="32"></canvas><button type="button" data-act="slot" data-index="${index}">${slotLabel(slot, layout.slice(0, index).filter((s) => s === slot).length)}: ${esc(def?.name ?? 'пусто')}</button>${id ? `<button type="button" data-act="unfit" data-index="${index}">Снять</button>` : ''}</div>`;
+      return `<div class="slot"><canvas class="micon" data-mod="${id ?? ''}" width="32" height="32"></canvas><button type="button" data-act="slot" data-index="${index}">${slotLabel(slot, layout.slice(0, index).filter((s) => s === slot).length)}: ${esc(def?.name ?? 'пусто')}</button>${id ? `<button type="button" data-act="unfit" data-index="${index}">Снять</button>` : ''}</div>`;
     }).join('');
     const catalog = fitSlot == null ? '' : catalogHtml(world, st.owner, tech, layout[fitSlot]!, fitSlot);
     const hulls = HULLS.filter((h) => h.tech <= tech).map((h) => `<button type="button" data-act="hull" data-hull="${h.id}" ${h.id === hull.id ? 'disabled' : ''}>${esc(h.name)} · ${h.price.toLocaleString('ru-RU')}</button>`).join(' ');
-    body = `<div class="stats"><span>Сеть ${fit.pgUsed}/${fit.pg}</span><span>Процессор ${fit.cpuUsed}/${fit.cpu}</span><span>Калибровка ${fit.calUsed}/${fit.cal}</span><span>Скорость ${Math.round(fit.speed)} км/с</span><span>Трюм ${Math.round(cargoUsed(world.player.cargo))}/${Math.round(fit.cargo)}</span><span>Урон ${Math.round(fit.dps)}</span><span>Щит ${Math.round(fit.maxShield)}</span><span>Броня ${Math.round(fit.maxArmor)}</span></div>${slots}${catalog}<h3>Корпуса верфи (тех. ${tech})</h3><div class="btns">${hulls}</div>`;
+    body = `<div class="stats"><span>Сеть ${Math.round(fit.pgUsed)}/${Math.round(fit.pg)}</span><span>Процессор ${Math.round(fit.cpuUsed)}/${Math.round(fit.cpu)}</span><span>Калибровка ${Math.round(fit.calUsed)}/${Math.round(fit.cal)}</span><span>Скорость ${Math.round(fit.speed)} км/с</span><span>Трюм ${Math.round(cargoUsed(world.player.cargo))}/${Math.round(fit.cargo)}</span><span>Урон ${Math.round(fit.dps)}</span><span>Щит ${Math.round(fit.maxShield)}</span><span>Броня ${Math.round(fit.maxArmor)}</span></div>${slots}${catalog}<h3>Корпуса верфи (тех. ${tech})</h3><div class="btns">${hulls}</div>`;
   } else if (tab === 'jobs') {
     const list = world.missions.filter((m) => m.stationId === stationId || m.status === 'active');
     body = list.map((m) => `<article class="job"><div><b>${esc(m.title)}</b><div class="sub">${esc(m.desc)}</div><div class="sub">Награда ${Math.round(m.reward).toLocaleString('ru-RU')} · ${m.status === 'active' ? 'активен' : 'предложение'}</div></div>${m.status === 'offer' ? `<button type="button" class="primary" data-act="mission" data-id="${esc(m.id)}">Принять</button>` : ''}</article>`).join('') || '<p>Доска пуста.</p>';
@@ -1314,6 +1346,12 @@ function catalogHtml(world: World, owner: World['stations'][number]['owner'], te
   const own = owned.map(([id, n]) => `<button type="button" data-act="fit-owned" data-mod="${id}" data-index="${index}">Со склада: ${esc(MODULE_BY_ID[id]!.name)} ×${n}</button>`).join(' ');
   const shop = mods.map((m) => `<button type="button" data-act="fit" data-mod="${m.id}" data-index="${index}">${esc(m.name)} · ${m.price.toLocaleString('ru-RU')} · ${m.pg} сети / ${m.cpu} цп</button>`).join(' ');
   return `<h3>Слот</h3><p class="sub">${mods[0] ? esc(mods[0].blurb) : ''}</p><div class="stack">${own}${shop}<button type="button" data-act="sell-mod" data-mod="${owned[0]?.[0] ?? ''}" ${owned.length ? '' : 'disabled'}>Продать один со склада</button></div><p class="sub">Скидка растёт с репутацией у ${esc(FACTION_SHORT[owner])}.</p>`;
+}
+
+function hashFace(id: string): number {
+  let n = 0;
+  for (let i = 0; i < id.length; i++) n = (n * 33 + id.charCodeAt(i)) >>> 0;
+  return n;
 }
 
 function hailOf(world: World, sel: Sel): string {
