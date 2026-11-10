@@ -1,17 +1,20 @@
-import { FACTION_COLOR, PLAYER_COLOR } from '../sim/content';
+import { FACTION_COLOR, FACTION_ENGINE, PLAYER_COLOR } from '../sim/content';
 import { computeFit } from '../sim/fitting';
 import { Y_SQUASH, worldToScreen, type Camera } from '../input/pick';
 import { unit } from '../sim/rng';
 import type { FactionId, Pilot, World } from '../sim/types';
+import { getQuality, type Quality } from './quality';
+import { paintShipAura, shipCanvas } from './ships';
 
 export interface ShipSample {
   id: string;
+  name: string;
+  faction: FactionId;
+  hullId: string;
   x: number;
   y: number;
   vx: number;
   vy: number;
-  hullId: string;
-  faction: FactionId;
   shield: number;
   armor: number;
   hull: number;
@@ -20,147 +23,240 @@ export interface ShipSample {
   maxHull: number;
   docked: boolean;
   jumping: boolean;
-  name: string;
   systemId: string;
+  combat: boolean;
 }
 
-interface Star {
+interface Particle {
   x: number;
   y: number;
-  z: number;
-  r: number;
-  a: number;
+  vx: number;
+  vy: number;
+  life: number;
+  max: number;
+  color: string;
+  size: number;
+  kind: 'spark' | 'smoke' | 'chunk';
 }
 
-const starCache = new Map<number, Star[]>();
-const planetCache = new Map<string, HTMLCanvasElement>();
+const particles: Particle[] = [];
+const trails = new Map<string, { x: number; y: number }[]>();
+let seenPing = -1;
+const nebulaCache = new Map<string, HTMLCanvasElement>();
+const starCache = new Map<string, HTMLCanvasElement>();
 
-function starsFor(seed: number): Star[] {
-  const hit = starCache.get(seed);
-  if (hit) return hit;
-  const list: Star[] = [];
-  for (let i = 0; i < 220; i++) {
-    list.push({
-      x: unit(seed, i, 1) * 4000 - 2000,
-      y: unit(seed, i, 2) * 4000 - 2000,
-      z: 0.15 + unit(seed, i, 3) * 0.85,
-      r: unit(seed, i, 4) > 0.92 ? 1.6 : 0.8,
-      a: 0.25 + unit(seed, i, 5) * 0.7,
+function q(): Quality {
+  return getQuality();
+}
+
+function burst(x: number, y: number, color: string, count: number, speed: number): void {
+  const cap = q().particles;
+  for (let i = 0; i < count && particles.length < cap; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const s = speed * (0.3 + Math.random());
+    particles.push({
+      x,
+      y,
+      vx: Math.cos(a) * s,
+      vy: Math.sin(a) * s,
+      life: 0.4 + Math.random() * 0.7,
+      max: 0.8,
+      color,
+      size: 1.5 + Math.random() * 3,
+      kind: Math.random() > 0.75 ? 'chunk' : 'spark',
     });
   }
-  starCache.set(seed, list);
-  return list;
 }
 
-const PLANET_COLORS: Record<string, [string, string, string]> = {
-  volcanic: ['#3a1a14', '#c4512a', '#ffb15a'],
-  ocean: ['#0c2744', '#1f6fb5', '#9fd4ff'],
-  barren: ['#3a3228', '#a08a68', '#e6d2a8'],
-  ice: ['#c5d4e4', '#f4fbff', '#8fb4d8'],
-  gas: ['#6a4a22', '#e0b15a', '#f3dd9a'],
-  garden: ['#16351f', '#3e9a4c', '#d8e38a'],
-  hive: ['#3a2a18', '#c47a32', '#f0c27a'],
-};
-
-function planetSprite(id: string, type: string, seed: number): HTMLCanvasElement {
-  const key = `${id}:${type}`;
-  const cached = planetCache.get(key);
-  if (cached) return cached;
-  const c = document.createElement('canvas');
-  c.width = 128;
-  c.height = 128;
-  const g = c.getContext('2d')!;
-  const [dark, mid, light] = PLANET_COLORS[type] ?? PLANET_COLORS.barren!;
-  g.fillStyle = mid;
-  g.beginPath();
-  g.arc(64, 64, 60, 0, Math.PI * 2);
-  g.fill();
-  for (let i = 0; i < 18; i++) {
-    const x = 20 + unit(seed, i, 8) * 88;
-    const y = 16 + unit(seed, i, 9) * 96;
-    const rw = 10 + unit(seed, i, 10) * 36;
-    const rh = 6 + unit(seed, i, 11) * 16;
-    g.fillStyle = unit(seed, i, 12) > 0.5 ? light : dark;
-    g.globalAlpha = 0.45;
-    g.beginPath();
-    g.ellipse(x, y, rw, rh, unit(seed, i, 13) * 2, 0, Math.PI * 2);
-    g.fill();
+function stepParticles(dt: number): void {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i]!;
+    p.life -= dt;
+    if (p.life <= 0) {
+      particles.splice(i, 1);
+      continue;
+    }
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vx *= 0.98;
+    p.vy *= 0.98;
   }
-  g.globalAlpha = 1;
-  if (type === 'gas') {
-    for (let b = 0; b < 6; b++) {
-      g.fillStyle = b % 2 ? 'rgba(255,255,255,.18)' : 'rgba(80,40,10,.25)';
-      g.fillRect(8, 18 + b * 16, 112, 8);
+}
+
+function paintParticles(ctx: CanvasRenderingContext2D, cam: Camera): void {
+  for (const p of particles) {
+    const s = worldToScreen(cam, p.x, p.y);
+    ctx.globalAlpha = Math.max(0, p.life / p.max);
+    ctx.fillStyle = p.color;
+    if (p.kind === 'chunk') ctx.fillRect(s.x, s.y, p.size, p.size * 0.6);
+    else {
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
     }
   }
-  const shade = g.createRadialGradient(46, 42, 8, 64, 64, 62);
-  shade.addColorStop(0, 'rgba(255,255,255,.45)');
-  shade.addColorStop(0.45, 'rgba(255,255,255,0)');
-  shade.addColorStop(1, 'rgba(0,0,0,.55)');
-  g.fillStyle = shade;
-  g.beginPath();
-  g.arc(64, 64, 60, 0, Math.PI * 2);
-  g.fill();
-  planetCache.set(key, c);
+  ctx.globalAlpha = 1;
+}
+
+function backdrop(kind: string, w: number, h: number, paint: (ctx: CanvasRenderingContext2D) => void): HTMLCanvasElement {
+  const key = `${q().name}|${kind}|${w}x${h}`;
+  const hit = (kind.startsWith('star') ? starCache : nebulaCache).get(key);
+  if (hit && hit.width === w) return hit;
+  const c = document.createElement('canvas');
+  c.width = Math.max(2, w);
+  c.height = Math.max(2, h);
+  paint(c.getContext('2d')!);
+  (kind.startsWith('star') ? starCache : nebulaCache).set(key, c);
   return c;
 }
 
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
+function paintStars(ctx: CanvasRenderingContext2D, seed: number, parallax: number, cam: Camera): void {
+  const layer = backdrop(`star${seed}${parallax}`, 512, 512, (g) => {
+    const n = q().stars;
+    for (let i = 0; i < n; i++) {
+      const x = unit(seed, i, 1) * 512;
+      const y = unit(seed, i, 2) * 512;
+      const bright = unit(seed, i, 3);
+      g.fillStyle = bright > 0.92 ? '#fff4d2' : '#d5e4ff';
+      g.globalAlpha = 0.25 + bright * 0.7;
+      g.fillRect(x, y, bright > 0.9 ? 2 : 1, bright > 0.9 ? 2 : 1);
+    }
+    g.globalAlpha = 1;
+  });
+  const ox = ((-cam.x * parallax) % 512 + 512) % 512;
+  const oy = ((-cam.y * parallax) % 512 + 512) % 512;
+  for (let x = -1; x <= cam.viewW / 512 + 1; x++) {
+    for (let y = -1; y <= cam.viewH / 512 + 1; y++) ctx.drawImage(layer, ox + x * 512 - 512, oy + y * 512 - 512);
+  }
 }
 
-export function paintFrame(ctx: CanvasRenderingContext2D, w: number, h: number, color = '#070c16'): void {
-  ctx.clearRect(0, 0, w, h);
-  const g = ctx.createRadialGradient(w * 0.5, h * 0.45, 40, w * 0.5, h * 0.5, Math.max(w, h) * 0.7);
-  g.addColorStop(0, '#121a2c');
-  g.addColorStop(1, color);
+function paintNebula(ctx: CanvasRenderingContext2D, w: number, h: number, seed: number): void {
+  if (!q().nebula) return;
+  const layer = backdrop(`neb${seed}`, 480, 270, (g) => {
+    for (let i = 0; i < 5; i++) {
+      const x = unit(seed, i, 4) * 480;
+      const y = unit(seed, i, 5) * 270;
+      const rad = 60 + unit(seed, i, 6) * 90;
+      const hue = unit(seed, i, 7) * 360;
+      const glow = g.createRadialGradient(x, y, 0, x, y, rad);
+      glow.addColorStop(0, `hsla(${hue}, 55%, 46%, .45)`);
+      glow.addColorStop(1, 'hsla(220, 40%, 10%, 0)');
+      g.fillStyle = glow;
+      g.beginPath();
+      g.arc(x, y, rad, 0, Math.PI * 2);
+      g.fill();
+    }
+  });
+  ctx.globalAlpha = 0.85;
+  ctx.drawImage(layer, 0, 0, w, h);
+  ctx.globalAlpha = 1;
+}
+
+export function paintFrame(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, '#10182a');
+  g.addColorStop(1, '#05070e');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
 }
 
-export function drawMenu(ctx: CanvasRenderingContext2D, w: number, h: number, time: number): void {
+export function drawSplash(ctx: CanvasRenderingContext2D, w: number, h: number, time: number): void {
   paintFrame(ctx, w, h);
-  drawStarLayer(ctx, w, h, 1, { x: Math.sin(time * 0.02) * 40, y: 0, zoom: 0.35, viewW: w, viewH: h }, 0.6);
-  const cx = w * 0.5;
-  const cy = h * 0.42;
+  paintNebula(ctx, w, h, 3);
+  paintStars(ctx, 11, 0.2, { x: time * 40, y: time * 8, zoom: 1, viewW: w, viewH: h });
+  const fly = Math.min(1, time / 3.2);
   ctx.save();
-  ctx.translate(cx, cy);
-  const glow = ctx.createRadialGradient(0, 0, 10, 0, 0, 180);
-  glow.addColorStop(0, 'rgba(224,181,101,.35)');
-  glow.addColorStop(1, 'rgba(224,181,101,0)');
-  ctx.fillStyle = glow;
-  ctx.beginPath();
-  ctx.arc(0, 0, 180, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#e7c27a';
-  ctx.beginPath();
-  ctx.arc(-20, -10, 54, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(180,210,255,.8)';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.ellipse(0, 10, 120, 28, -0.4, 0, Math.PI * 2);
-  ctx.stroke();
-  drawShipShape(ctx, 'iskra', 22, time * 0.4, PLAYER_COLOR, 90, 40);
-  drawShipShape(ctx, 'klinok', 16, time * 0.6 + 2, FACTION_COLOR.regnar, -120, 70);
+  ctx.translate(w * (0.15 + fly * 0.7), h * 0.48);
+  ctx.rotate(-0.2);
+  const sprite = shipCanvas('oplot', '#e0b565', -0.3, 'kvissae');
+  ctx.drawImage(sprite, -70, -70, 140, 140);
+  ctx.restore();
+  ctx.save();
+  ctx.globalAlpha = Math.min(1, time * 0.8);
+  ctx.fillStyle = '#e0b565';
+  ctx.font = `700 ${Math.max(42, w * 0.08)}px Unbounded, Rubik, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('КРОМКА', w / 2, h * 0.78);
+  ctx.font = '16px Rubik, sans-serif';
+  ctx.fillStyle = '#b7d4ff';
+  ctx.fillText('живой край', w / 2, h * 0.78 + 32);
   ctx.restore();
 }
 
-function drawStarLayer(ctx: CanvasRenderingContext2D, w: number, h: number, seed: number, cam: Camera, parallax: number): void {
-  ctx.fillStyle = '#d5e4ff';
-  for (const s of starsFor(seed)) {
-    const x = ((s.x - cam.x * parallax * s.z) % w + w) % w;
-    const y = ((s.y - cam.y * parallax * s.z) % h + h) % h;
-    ctx.globalAlpha = s.a * (0.4 + parallax);
-    ctx.fillRect(x, y, s.r, s.r);
+export function drawMenu(ctx: CanvasRenderingContext2D, w: number, h: number, time: number): void {
+  paintFrame(ctx, w, h);
+  paintNebula(ctx, w, h, 9);
+  paintStars(ctx, 4, 0.12, { x: time * 18, y: time * 4, zoom: 1, viewW: w, viewH: h });
+  paintStars(ctx, 8, 0.4, { x: time * 46, y: time * 9, zoom: 1, viewW: w, viewH: h });
+  const dust = q().name === 'low' ? 18 : 46;
+  for (let i = 0; i < dust; i++) {
+    const speed = 28 + (i % 7) * 14;
+    const x = ((i * 97 + time * speed) % (w + 40)) - 20;
+    const y = ((i * 53 + time * speed * 0.15) % h);
+    ctx.globalAlpha = 0.25 + (i % 5) * 0.1;
+    ctx.fillStyle = i % 4 === 0 ? '#e0b565' : '#d5e4ff';
+    ctx.fillRect(x, y, i % 3 === 0 ? 2 : 1, 1);
   }
   ctx.globalAlpha = 1;
+  for (let i = 0; i < 5; i++) {
+    const ang = time * (0.12 + i * 0.02) + i * 1.3;
+    const rad = 70 + i * 28;
+    const x = w * 0.72 + Math.cos(ang) * rad * 0.9;
+    const y = h * 0.42 + Math.sin(ang) * rad * 0.35;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(ang + time);
+    ctx.fillStyle = i % 2 ? '#8d7358' : '#c4aa86';
+    ctx.beginPath();
+    ctx.moveTo(10, 0);
+    ctx.lineTo(-4, 7);
+    ctx.lineTo(-8, -2);
+    ctx.lineTo(2, -8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+  drawPlanet(ctx, 'menu-world', 'garden', w * 0.78, h * 0.58, Math.min(150, w * 0.16), time * 0.35, true);
+  const fly = (offset: number, speed: number, y: number, hull: string, color: string, faction: string) => {
+    const x = ((time * speed + offset) % (w + 220)) - 160;
+    const sprite = shipCanvas(hull, color, 0.15, faction);
+    if (faction !== 'taeyori') {
+      ctx.strokeStyle = FACTION_ENGINE[faction as keyof typeof FACTION_ENGINE] ?? '#9fd4ff';
+      ctx.globalAlpha = 0.55;
+      ctx.beginPath();
+      ctx.moveTo(x - 70, y);
+      ctx.lineTo(x - 8, y);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    ctx.drawImage(sprite, x - 28, y - 28, 64, 64);
+    paintShipAura(ctx, x, y, 64, 0.15, faction, hull, time, faction === 'omnir');
+  };
+  fly(40, 46, h * 0.28, 'iskra', '#8fb4d8', 'human');
+  fly(280, 34, h * 0.58, 'oplot', FACTION_COLOR.zhargi, 'zhargi');
+  fly(520, 40, h * 0.18, 'korob', FACTION_COLOR.kvissae, 'kvissae');
+  fly(760, 28, h * 0.42, 'monolit', FACTION_COLOR.taeyori, 'taeyori');
+}
+
+export function drawHangar(ctx: CanvasRenderingContext2D, w: number, h: number, owner: FactionId, time: number): void {
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, '#24344a');
+  g.addColorStop(0.55, '#121a28');
+  g.addColorStop(1, '#070b12');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = 'rgba(0,0,0,.35)';
+  for (let i = 0; i < 6; i++) ctx.fillRect(i * (w / 5), 0, 8, h);
+  ctx.strokeStyle = FACTION_COLOR[owner];
+  ctx.globalAlpha = 0.7;
+  ctx.strokeRect(16, 16, w - 32, h - 32);
+  ctx.globalAlpha = 1;
+  const ship = shipCanvas('iskra', PLAYER_COLOR, Math.sin(time * 0.3) * 0.2, 'free');
+  ctx.drawImage(ship, w * 0.38, h * 0.15, h * 0.9, h * 0.9);
+  ctx.fillStyle = 'rgba(180,210,255,.15)';
+  ctx.beginPath();
+  ctx.ellipse(w * 0.5, h * 0.82, w * 0.22, 14, 0, 0, Math.PI * 2);
+  ctx.fill();
 }
 
 export function drawSystem(
@@ -171,35 +267,48 @@ export function drawSystem(
   ships: ShipSample[],
   now: number,
 ): void {
+  const qual = q();
   const w = cam.viewW;
   const h = cam.viewH;
   const sys = world.systems.find((s) => s.id === world.player.systemId);
-  paintFrame(ctx, w, h, sys?.owner === 'absolute' ? '#140814' : '#070c16');
-  drawStarLayer(ctx, w, h, world.seed + 3, cam, 0.25);
-  drawStarLayer(ctx, w, h, world.seed + 9, cam, 0.55);
+  paintFrame(ctx, w, h);
+  paintNebula(ctx, w, h, (world.seed + (sys?.hue ?? 0) * 10) | 0);
+  paintStars(ctx, world.seed + 3, 0.2, cam);
+  paintStars(ctx, world.seed + 9, 0.55, cam);
   if (!sys) return;
   if (world.player.jump) {
     drawTunnel(ctx, w, h, world.player.jump.progress, now);
     return;
   }
   const star = worldToScreen(cam, 0, 0);
-  const starColor = sys.star === 'red' ? '#ff6a4a' : sys.star === 'blue' ? '#8ecbff' : sys.star === 'white' ? '#f4f7ff' : sys.star === 'orange' ? '#ffb15a' : '#ffd27a';
-  const glow = ctx.createRadialGradient(star.x, star.y, 8, star.x, star.y, 160 * cam.zoom + 80);
-  glow.addColorStop(0, starColor);
-  glow.addColorStop(0.2, starColor);
+  const starColor = sys.star === 'red' ? '#ff6a4a' : sys.star === 'blue' ? '#8ecbff' : sys.star === 'white' ? '#f7fbff' : sys.star === 'orange' ? '#ffb15a' : '#ffd27a';
+  const glow = ctx.createRadialGradient(star.x, star.y, 4, star.x, star.y, 90 + 80 * cam.zoom);
+  glow.addColorStop(0, '#fff');
+  glow.addColorStop(0.18, starColor);
+  glow.addColorStop(0.45, starColor);
   glow.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = glow;
   ctx.beginPath();
-  ctx.arc(star.x, star.y, 180, 0, Math.PI * 2);
+  ctx.arc(star.x, star.y, 160, 0, Math.PI * 2);
   ctx.fill();
-  if (sys.belt) {
-    ctx.strokeStyle = 'rgba(180,160,120,.25)';
-    ctx.lineWidth = 8;
-    const belt = worldToScreen(cam, sys.belt, 0);
-    const r = Math.abs(belt.x - star.x);
+  if (qual.glow) {
+    ctx.strokeStyle = 'rgba(255,255,255,.25)';
     ctx.beginPath();
-    ctx.ellipse(star.x, star.y, r, r * Y_SQUASH, 0, 0, Math.PI * 2);
+    ctx.moveTo(star.x - 70, star.y);
+    ctx.lineTo(star.x + 70, star.y);
+    ctx.moveTo(star.x, star.y - 46);
+    ctx.lineTo(star.x, star.y + 46);
     ctx.stroke();
+  }
+  if (sys.belt) {
+    const rocks = qual.rocks;
+    for (let i = 0; i < rocks; i++) {
+      const a = (i / rocks) * Math.PI * 2 + now * 0.02;
+      const rad = sys.belt + Math.sin(i * 2.1) * 80;
+      const p = worldToScreen(cam, Math.cos(a) * rad, Math.sin(a) * rad);
+      ctx.fillStyle = i % 3 ? '#8a7560' : '#c2aa8a';
+      ctx.fillRect(p.x, p.y, 3 + (i % 3), 2 + (i % 2));
+    }
   }
   for (const gate of sys.gates) {
     const p = worldToScreen(cam, gate.x, gate.y);
@@ -207,15 +316,14 @@ export function drawSystem(
     ctx.save();
     ctx.translate(p.x, p.y);
     ctx.strokeStyle = FACTION_COLOR[other?.owner ?? 'free'];
+    ctx.shadowColor = ctx.strokeStyle;
+    ctx.shadowBlur = qual.glow ? 12 : 0;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(0, 0, Math.max(16, 28 * cam.zoom), 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 18, 10, now * 0.6, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.strokeStyle = 'rgba(255,255,255,.35)';
-    ctx.beginPath();
-    ctx.arc(0, 0, Math.max(8, 14 * cam.zoom), now, now + 4);
-    ctx.stroke();
-    ctx.fillStyle = '#c9d7ea';
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#d5e2f2';
     ctx.font = '12px Rubik, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(other?.name ?? 'врата', 0, -22);
@@ -225,20 +333,8 @@ export function drawSystem(
     const planet = world.planets.find((p) => p.id === id);
     if (!planet) continue;
     const p = worldToScreen(cam, planet.x, planet.y);
-    const rad = Math.max(10, planet.radius * cam.zoom);
-    const sprite = planetSprite(planet.id, planet.type, world.seed + planet.name.length);
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, rad, 0, Math.PI * 2);
-    ctx.clip();
-    const shift = (now * planet.spin * 12) % (rad * 2);
-    ctx.drawImage(sprite, p.x - rad - shift, p.y - rad, rad * 4, rad * 2);
-    ctx.restore();
-    ctx.strokeStyle = 'rgba(255,255,255,.25)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, rad + 2, 0, Math.PI * 2);
-    ctx.stroke();
+    const rad = Math.max(14, planet.radius * cam.zoom);
+    drawPlanet(ctx, planet.id, planet.type, p.x, p.y, rad, now * planet.spin, qual.glow);
     if (selectedId === planet.id) bracket(ctx, p.x, p.y, rad + 8, '#e0b565');
     ctx.fillStyle = '#d5e2f2';
     ctx.font = '13px Rubik, sans-serif';
@@ -251,14 +347,13 @@ export function drawSystem(
     const p = worldToScreen(cam, st.x, st.y);
     ctx.save();
     ctx.translate(p.x, p.y);
-    ctx.fillStyle = '#101826';
+    ctx.fillStyle = '#0e1624';
     ctx.strokeStyle = FACTION_COLOR[st.owner];
     ctx.lineWidth = 2;
     ctx.beginPath();
     for (let i = 0; i < 6; i++) {
-      const a = (Math.PI / 3) * i + now * 0.2;
-      const r = 11;
-      ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+      const a = (Math.PI / 3) * i + now * 0.15;
+      ctx.lineTo(Math.cos(a) * 12, Math.sin(a) * 12);
     }
     ctx.closePath();
     ctx.fill();
@@ -270,50 +365,178 @@ export function drawSystem(
     if (wreck.systemId !== sys.id) continue;
     const p = worldToScreen(cam, wreck.x, wreck.y);
     ctx.fillStyle = '#6e6258';
-    ctx.fillRect(p.x - 5, p.y - 3, 10, 6);
+    ctx.fillRect(p.x - 6, p.y - 3, 12, 6);
     if (selectedId === wreck.id) bracket(ctx, p.x, p.y, 16, '#e0b565');
   }
+  const dt = 0.016;
+  stepParticles(dt);
   for (const ship of ships) {
     if (ship.systemId !== world.player.systemId || ship.docked || ship.jumping) continue;
     const p = worldToScreen(cam, ship.x, ship.y);
     const ang = Math.atan2(ship.vy, ship.vx);
+    const faction = ship.id === 'player' ? (world.player.origin?.race ?? 'human') : ship.faction;
     const color = ship.id === 'player' ? PLAYER_COLOR : FACTION_COLOR[ship.faction];
-    const size = ship.id === 'player' ? 16 : 13;
-    if (ship.id !== 'player') {
-      ctx.strokeStyle = 'rgba(120,160,255,.15)';
-      ctx.beginPath();
-      ctx.moveTo(worldToScreen(cam, ship.x - ship.vx * 0.35, ship.y - ship.vy * 0.35).x, worldToScreen(cam, ship.x - ship.vx * 0.35, ship.y - ship.vy * 0.35).y);
-      ctx.lineTo(p.x, p.y);
-      ctx.stroke();
-    }
-    drawShipShape(ctx, ship.hullId, size, ang, color, p.x, p.y);
     const speed = Math.hypot(ship.vx, ship.vy);
-    if (speed > 20) {
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(ang);
-      const flame = ctx.createLinearGradient(-size, 0, -size - 10 - speed * 0.02, 0);
-      flame.addColorStop(0, 'rgba(120,190,255,.9)');
-      flame.addColorStop(1, 'rgba(120,190,255,0)');
-      ctx.fillStyle = flame;
+    if (speed > 30) {
+      const hist = trails.get(ship.id) ?? [];
+      hist.push({ x: p.x, y: p.y });
+      while (hist.length > qual.trails) hist.shift();
+      trails.set(ship.id, hist);
+      const trail = faction === 'taeyori' ? 'rgba(180,140,255,0)' : (FACTION_ENGINE[faction] ?? '#9fd4ff');
+      ctx.strokeStyle = trail;
+      ctx.globalAlpha = faction === 'taeyori' ? 0 : 0.55;
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(-size + 2, 0);
-      ctx.lineTo(-size - 8 - (now * 40) % 6, 3);
-      ctx.lineTo(-size - 8, -3);
-      ctx.fill();
-      ctx.restore();
+      hist.forEach((pt, i) => (i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y)));
+      ctx.stroke();
+      ctx.globalAlpha = 1;
     }
-    bars(ctx, p.x, p.y - size - 10, ship);
-    if (selectedId === ship.id) bracket(ctx, p.x, p.y, size + 8, color);
+    const sprite = shipCanvas(ship.hullId, color, ang, faction);
+    const size = ship.id === 'player' ? 54 : 44;
+    ctx.drawImage(sprite, p.x - size / 2, p.y - size / 2, size, size);
+    paintShipAura(ctx, p.x, p.y, size, ang, faction, ship.hullId, now, ship.combat);
+    bars(ctx, p.x, p.y - size * 0.45, ship);
+    if (selectedId === ship.id) bracket(ctx, p.x, p.y, size * 0.45, color);
   }
-  const player = ships.find((s) => s.id === 'player');
-  if (player && selectedId && !world.player.dockedAt) {
-    const target = ships.find((s) => s.id === selectedId);
-    if (target) {
-      const a = worldToScreen(cam, player.x, player.y);
-      const b = worldToScreen(cam, target.x, target.y);
-      ctx.strokeStyle = 'rgba(159,212,255,.35)';
-      ctx.setLineDash([4, 4]);
+  for (const ping of world.pings) {
+    if (ping.time <= seenPing || ping.systemId !== sys.id) continue;
+    const at = worldToScreen(cam, ping.x, ping.y);
+    if (ping.kind === 'explode') burst(ping.x, ping.y, '#ffb15a', qual.name === 'low' ? 8 : 18, 220);
+    else if (ping.kind === 'hit') {
+      burst(ping.x, ping.y, ping.color, 4, 80);
+      if (qual.glow) {
+        ctx.strokeStyle = 'rgba(120,200,255,.7)';
+        ctx.beginPath();
+        ctx.arc(at.x, at.y, 14, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+  }
+  const newest = world.pings[world.pings.length - 1]?.time ?? seenPing;
+  if (newest > seenPing) seenPing = newest;
+  paintParticles(ctx, cam);
+}
+
+function drawPlanet(ctx: CanvasRenderingContext2D, id: string, type: string, x: number, y: number, rad: number, spin: number, glow: boolean): void {
+  const sheet = planetSheet(id, type, spin, glow);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, rad, 0, Math.PI * 2);
+  ctx.clip();
+  const shift = (spin * 40) % (rad * 2);
+  ctx.drawImage(sheet, x - rad * 2 - shift, y - rad, rad * 4, rad * 2);
+  const light = ctx.createRadialGradient(x - rad * 0.35, y - rad * 0.4, rad * 0.1, x, y, rad);
+  light.addColorStop(0, 'rgba(255,255,255,.35)');
+  light.addColorStop(0.55, 'rgba(255,255,255,0)');
+  light.addColorStop(1, 'rgba(0,0,0,.55)');
+  ctx.fillStyle = light;
+  ctx.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+  ctx.restore();
+  if (glow) {
+    ctx.strokeStyle = 'rgba(180,220,255,.35)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(x, y, rad + 3, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  if (type === 'gas' || type === 'ice') {
+    ctx.strokeStyle = 'rgba(220,230,240,.45)';
+    ctx.beginPath();
+    ctx.ellipse(x, y, rad * 1.6, rad * 0.28, -0.4, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+const planetSheets = new Map<string, HTMLCanvasElement>();
+
+function planetSheet(id: string, type: string, seed: number, detailed: boolean): HTMLCanvasElement {
+  const key = `${id}:${type}:${detailed ? 1 : 0}`;
+  const hit = planetSheets.get(key);
+  if (hit) return hit;
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 128;
+  const g = c.getContext('2d')!;
+  const palette: Record<string, [string, string, string]> = {
+    volcanic: ['#3a120e', '#c4512a', '#ffb15a'],
+    ocean: ['#0c2744', '#1f6fb5', '#b7e6ff'],
+    barren: ['#3a3228', '#a08a68', '#e6d2a8'],
+    ice: ['#9bb4c9', '#e7f3fb', '#ffffff'],
+    gas: ['#6a4a22', '#e0b15a', '#fff0c2'],
+    garden: ['#16351f', '#3e9a4c', '#d6ee8a'],
+    hive: ['#3a2a18', '#c47a32', '#f0c27a'],
+  };
+  const [dark, mid, light] = palette[type] ?? palette.barren!;
+  g.fillStyle = mid;
+  g.fillRect(0, 0, 256, 128);
+  const blobs = detailed ? 28 : 12;
+  for (let i = 0; i < blobs; i++) {
+    g.fillStyle = unit(seed + id.length, i, 2) > 0.5 ? light : dark;
+    g.globalAlpha = 0.55;
+    g.beginPath();
+    g.ellipse(unit(seed, i, 3) * 256, unit(seed, i, 4) * 128, 10 + unit(seed, i, 5) * 36, 6 + unit(seed, i, 6) * 14, 0, 0, Math.PI * 2);
+    g.fill();
+  }
+  g.globalAlpha = 1;
+  if (type === 'gas') {
+    for (let b = 0; b < 7; b++) {
+      g.fillStyle = b % 2 ? 'rgba(255,255,255,.2)' : 'rgba(80,40,10,.28)';
+      g.fillRect(0, 8 + b * 16, 256, 8);
+    }
+  }
+  planetSheets.set(key, c);
+  return c;
+}
+
+function drawTunnel(ctx: CanvasRenderingContext2D, w: number, h: number, progress: number, now: number): void {
+  ctx.fillStyle = '#05060f';
+  ctx.fillRect(0, 0, w, h);
+  ctx.save();
+  ctx.translate(w / 2, h / 2);
+  const streaks = q().name === 'low' ? 18 : 46;
+  for (let i = 0; i < streaks; i++) {
+    const a = (i / streaks) * Math.PI * 2 + now * 0.4;
+    const inner = 16 + progress * 30;
+    const outer = 90 + (i % 7) * 28 + progress * 260;
+    ctx.strokeStyle = i % 2 ? 'rgba(224,181,101,.75)' : 'rgba(120,190,255,.65)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a) * inner, Math.sin(a) * inner);
+    ctx.lineTo(Math.cos(a) * outer, Math.sin(a) * outer);
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#e7eef8';
+  ctx.font = '16px Rubik, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Гиперканал', 0, 6);
+  ctx.fillStyle = 'rgba(255,255,255,.15)';
+  ctx.fillRect(-90, 18, 180, 8);
+  ctx.fillStyle = '#e0b565';
+  ctx.fillRect(-90, 18, 180 * Math.max(0, Math.min(1, progress)), 8);
+  ctx.restore();
+}
+
+export function drawMap(ctx: CanvasRenderingContext2D, world: World, cam: Camera, selectedId: string | null, now: number): void {
+  const w = cam.viewW;
+  const h = cam.viewH;
+  paintFrame(ctx, w, h);
+  paintNebula(ctx, w, h, world.seed);
+  paintStars(ctx, world.seed, 0.12, cam);
+  const drawn = new Set<string>();
+  for (const sys of world.systems) {
+    for (const to of sys.links) {
+      const key = [sys.id, to].sort().join(':');
+      if (drawn.has(key)) continue;
+      drawn.add(key);
+      const other = world.systems.find((s) => s.id === to);
+      if (!other) continue;
+      const a = worldToScreen(cam, sys.x, sys.y);
+      const b = worldToScreen(cam, other.x, other.y);
+      const onRoute = !!(world.player.route?.includes(sys.id) && world.player.route.includes(to));
+      ctx.strokeStyle = onRoute ? 'rgba(224,181,101,.95)' : 'rgba(150,180,220,.28)';
+      ctx.lineWidth = onRoute ? 2.4 : 1;
+      ctx.setLineDash(onRoute ? [6, 6] : []);
+      ctx.lineDashOffset = onRoute ? -now * 24 : 0;
       ctx.beginPath();
       ctx.moveTo(a.x, a.y);
       ctx.lineTo(b.x, b.y);
@@ -321,14 +544,51 @@ export function drawSystem(
       ctx.setLineDash([]);
     }
   }
+  for (const sys of world.systems) {
+    const p = worldToScreen(cam, sys.x, sys.y);
+    const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, sys.home ? 18 : 12);
+    glow.addColorStop(0, FACTION_COLOR[sys.owner]);
+    glow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, sys.home ? 18 : 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, sys.home ? 3.5 : 2.2, 0, Math.PI * 2);
+    ctx.fill();
+    if (sys.id === world.player.systemId) {
+      ctx.strokeStyle = PLAYER_COLOR;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 12 + Math.sin(now * 3) * 2, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    if (sys.id === selectedId) bracket(ctx, p.x, p.y, 14, '#e0b565');
+    ctx.fillStyle = '#d5e2f2';
+    ctx.font = '12px Rubik, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(sys.name, p.x + 10, p.y - 8);
+  }
+  if (world.player.jump) {
+    const from = world.systems.find((s) => s.id === world.player.jump!.from);
+    const to = world.systems.find((s) => s.id === world.player.jump!.to);
+    if (from && to) {
+      const a = worldToScreen(cam, from.x, from.y);
+      const b = worldToScreen(cam, to.x, to.y);
+      const t = world.player.jump.progress;
+      const sprite = shipCanvas('iskra', PLAYER_COLOR, Math.atan2(b.y - a.y, b.x - a.x), 'free');
+      ctx.drawImage(sprite, a.x + (b.x - a.x) * t - 16, a.y + (b.y - a.y) * t - 16, 32, 32);
+    }
+  }
 }
 
 function bars(ctx: CanvasRenderingContext2D, x: number, y: number, ship: ShipSample): void {
-  const w = 28;
+  const w = 32;
   const layers: [number, number, string][] = [
     [ship.shield, ship.maxShield, '#49b6ff'],
     [ship.armor, ship.maxArmor, '#e0a15c'],
-    [ship.hull, ship.maxHull, '#d5d8e0'],
+    [ship.hull, ship.maxHull, '#e7eef8'],
   ];
   layers.forEach((layer, i) => {
     const [cur, max, color] = layer;
@@ -359,199 +619,26 @@ function bracket(ctx: CanvasRenderingContext2D, x: number, y: number, r: number,
   ctx.stroke();
 }
 
-function drawShipShape(ctx: CanvasRenderingContext2D, hullId: string, size: number, ang: number, color: string, x: number, y: number): void {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(ang);
-  ctx.beginPath();
-  if (hullId === 'korob') {
-    ctx.rect(-size, -size * 0.55, size * 1.7, size * 1.1);
-  } else if (hullId === 'monolit') {
-    ctx.moveTo(size, 0);
-    ctx.lineTo(-size * 0.2, size * 0.7);
-    ctx.lineTo(-size, size * 0.35);
-    ctx.lineTo(-size, -size * 0.35);
-    ctx.lineTo(-size * 0.2, -size * 0.7);
-  } else if (hullId === 'oplot') {
-    ctx.moveTo(size, 0);
-    ctx.lineTo(size * 0.2, size * 0.55);
-    ctx.lineTo(-size, size * 0.35);
-    ctx.lineTo(-size * 0.6, 0);
-    ctx.lineTo(-size, -size * 0.35);
-    ctx.lineTo(size * 0.2, -size * 0.55);
-  } else if (hullId === 'klinok') {
-    ctx.moveTo(size, 0);
-    ctx.lineTo(-size * 0.1, size * 0.35);
-    ctx.lineTo(-size * 0.8, size * 0.85);
-    ctx.lineTo(-size, size * 0.2);
-    ctx.lineTo(-size * 0.4, 0);
-    ctx.lineTo(-size, -size * 0.2);
-    ctx.lineTo(-size * 0.8, -size * 0.85);
-    ctx.lineTo(-size * 0.1, -size * 0.35);
-  } else {
-    ctx.moveTo(size, 0);
-    ctx.lineTo(-size, size * 0.62);
-    ctx.lineTo(-size * 0.45, 0);
-    ctx.lineTo(-size, -size * 0.62);
-  }
-  ctx.closePath();
-  const grad = ctx.createLinearGradient(-size, -size, size, size);
-  grad.addColorStop(0, '#ffffff');
-  grad.addColorStop(0.35, color);
-  grad.addColorStop(1, '#1a120c');
-  ctx.fillStyle = grad;
-  ctx.fill();
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = 'rgba(255,255,255,.45)';
-  ctx.stroke();
-  ctx.restore();
-}
-
-function drawTunnel(ctx: CanvasRenderingContext2D, w: number, h: number, progress: number, now: number): void {
-  ctx.fillStyle = '#05060d';
-  ctx.fillRect(0, 0, w, h);
-  ctx.save();
-  ctx.translate(w / 2, h / 2);
-  for (let i = 0; i < 40; i++) {
-    const a = (i / 40) * Math.PI * 2 + now;
-    const inner = 20 + progress * 40;
-    const outer = 80 + (i % 5) * 40 + progress * 220;
-    ctx.strokeStyle = i % 2 ? 'rgba(224,181,101,.7)' : 'rgba(120,180,255,.55)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(Math.cos(a) * inner, Math.sin(a) * inner);
-    ctx.lineTo(Math.cos(a) * outer, Math.sin(a) * outer);
-    ctx.stroke();
-  }
-  ctx.fillStyle = '#e7eef8';
-  ctx.font = '16px Rubik, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('Гиперканал', 0, 8);
-  roundRect(ctx, -80, 24, 160, 8, 4);
-  ctx.fillStyle = 'rgba(255,255,255,.15)';
-  ctx.fill();
-  roundRect(ctx, -80, 24, 160 * progress, 8, 4);
-  ctx.fillStyle = '#e0b565';
-  ctx.fill();
-  ctx.restore();
-}
-
-export function drawMap(ctx: CanvasRenderingContext2D, world: World, cam: Camera, selectedId: string | null, now: number): void {
-  const w = cam.viewW;
-  const h = cam.viewH;
-  paintFrame(ctx, w, h, '#081018');
-  drawStarLayer(ctx, w, h, world.seed, cam, 0.15);
-  for (const sys of world.systems) {
-    const hue = sys.hue * 360;
-    const p = worldToScreen(cam, sys.x, sys.y);
-    const neb = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 70);
-    neb.addColorStop(0, `hsla(${hue}, 40%, 40%, .18)`);
-    neb.addColorStop(1, 'transparent');
-    ctx.fillStyle = neb;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, 70, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.lineWidth = 1;
-  const drawn = new Set<string>();
-  for (const sys of world.systems) {
-    for (const to of sys.links) {
-      const key = [sys.id, to].sort().join(':');
-      if (drawn.has(key)) continue;
-      drawn.add(key);
-      const other = world.systems.find((s) => s.id === to);
-      if (!other) continue;
-      const a = worldToScreen(cam, sys.x, sys.y);
-      const b = worldToScreen(cam, other.x, other.y);
-      const onRoute = world.player.route?.includes(sys.id) && world.player.route.includes(to);
-      ctx.strokeStyle = onRoute ? 'rgba(224,181,101,.9)' : 'rgba(140,170,210,.28)';
-      ctx.lineWidth = onRoute ? 2.5 : 1;
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.stroke();
-    }
-  }
-  for (const sys of world.systems) {
-    const p = worldToScreen(cam, sys.x, sys.y);
-    ctx.fillStyle = FACTION_COLOR[sys.owner];
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, sys.home ? 7 : 4.5, 0, Math.PI * 2);
-    ctx.fill();
-    if (sys.id === world.player.systemId) {
-      ctx.strokeStyle = PLAYER_COLOR;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 11 + Math.sin(now * 3), 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    if (sys.id === selectedId) bracket(ctx, p.x, p.y, 14, '#e0b565');
-    ctx.fillStyle = '#d5e2f2';
-    ctx.font = '12px Rubik, sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText(sys.name, p.x + 8, p.y - 8);
-  }
-  if (world.player.jump) {
-    const from = world.systems.find((s) => s.id === world.player.jump!.from);
-    const to = world.systems.find((s) => s.id === world.player.jump!.to);
-    if (from && to) {
-      const a = worldToScreen(cam, from.x, from.y);
-      const b = worldToScreen(cam, to.x, to.y);
-      const t = world.player.jump.progress;
-      ctx.fillStyle = PLAYER_COLOR;
-      ctx.beginPath();
-      ctx.arc(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, 5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-  for (const pilot of world.pilots) {
-    if (pilot.destroyed || pilot.jump || pilot.dockedAt) continue;
-    const sys = world.systems.find((s) => s.id === pilot.systemId);
-    if (!sys) continue;
-    const jitter = ((pilot.id.charCodeAt(1) || 1) % 7) - 3;
-    const p = worldToScreen(cam, sys.x + jitter * 4, sys.y + 10);
-    ctx.fillStyle = FACTION_COLOR[pilot.faction];
-    ctx.fillRect(p.x, p.y, 2, 2);
-  }
-}
-
 export function pilotSamples(world: World, pos: (id: string, x: number, y: number) => { x: number; y: number }): ShipSample[] {
   const out: ShipSample[] = [];
-  const push = (id: string, name: string, faction: FactionId, hullId: string, systemId: string, x: number, y: number, vx: number, vy: number, ship: Pilot['ship'], docked: boolean, jumping: boolean) => {
+  const push = (id: string, name: string, faction: FactionId, hullId: string, systemId: string, x: number, y: number, vx: number, vy: number, ship: Pilot['ship'], docked: boolean, jumping: boolean, combat: boolean) => {
     const at = pos(id, x, y);
-    const max = shipMax(ship);
+    const fit = computeFit(ship);
     out.push({
-      id,
-      name,
-      faction,
-      hullId,
-      x: at.x,
-      y: at.y,
-      vx,
-      vy,
-      shield: ship.shield,
-      armor: ship.armor,
-      hull: ship.hull,
-      maxShield: max.shield,
-      maxArmor: max.armor,
-      maxHull: max.hull,
-      docked,
-      jumping,
-      systemId,
+      id, name, faction, hullId, systemId,
+      x: at.x, y: at.y, vx, vy,
+      shield: ship.shield, armor: ship.armor, hull: ship.hull,
+      maxShield: Math.max(1, fit.maxShield), maxArmor: Math.max(1, fit.maxArmor), maxHull: Math.max(1, fit.maxHull),
+      docked, jumping, combat,
     });
   };
   const player = world.player;
-  push('player', player.name, 'free', player.ship.hullId, player.systemId, player.x, player.y, player.vx, player.vy, player.ship, !!player.dockedAt, !!player.jump);
+  push('player', player.name, 'free', player.ship.hullId, player.systemId, player.x, player.y, player.vx, player.vy, player.ship, !!player.dockedAt, !!player.jump, player.combatTimer > 0);
   for (const pilot of world.pilots) {
     if (pilot.destroyed) continue;
-    push(pilot.id, pilot.name, pilot.faction, pilot.ship.hullId, pilot.systemId, pilot.x, pilot.y, pilot.vx, pilot.vy, pilot.ship, !!pilot.dockedAt, !!pilot.jump);
+    push(pilot.id, pilot.name, pilot.faction, pilot.ship.hullId, pilot.systemId, pilot.x, pilot.y, pilot.vx, pilot.vy, pilot.ship, !!pilot.dockedAt, !!pilot.jump, pilot.combatTimer > 0);
   }
   return out;
-}
-
-function shipMax(ship: Pilot['ship']): { shield: number; armor: number; hull: number } {
-  const fit = computeFit(ship);
-  return { shield: Math.max(1, fit.maxShield), armor: Math.max(1, fit.maxArmor), hull: Math.max(1, fit.maxHull) };
 }
 
 export { Y_SQUASH };

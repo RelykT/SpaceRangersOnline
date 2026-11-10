@@ -1,4 +1,4 @@
-import { absoluteReach, systemCount } from './origin';
+import { omnirReach, systemCount } from './origin';
 import { LIVING_FACTIONS } from './types';
 import type { FactionId, GalaxySettings, Planet, PlanetType, StarKind, StarSystem, Station, World } from './types';
 import { makeMarket } from './economy';
@@ -74,7 +74,7 @@ function mst(pts: { x: number; y: number }[]): [number, number][] {
 export function generateMap(seed: number, settings?: GalaxySettings): GalaxyMap {
   const rng = mulberry32(seed);
   const n = systemCount(settings?.size ?? 'medium', rng());
-  const reach = absoluteReach(settings?.invaders ?? 'waking');
+  const reach = omnirReach(settings?.invaders ?? 'waking');
   const pts = Array.from({ length: n }, () => {
     const a = rng() * Math.PI * 2;
     const r = 160 + Math.sqrt(rng()) * 980;
@@ -161,15 +161,15 @@ export function generateMap(seed: number, settings?: GalaxySettings): GalaxyMap 
 
   const homes = pickHomes(systems);
   const livingHomes = LIVING_FACTIONS.map((f, i) => ({ f, id: homes[i]! }));
-  const absHome = homes[4]!;
+  const absHome = homes[LIVING_FACTIONS.length]!;
   for (const h of livingHomes) {
     const sys = systems.find((s) => s.id === h.id)!;
     sys.home = h.f;
     sys.owner = h.f;
   }
   const abs = systems.find((s) => s.id === absHome)!;
-  abs.home = 'absolute';
-  abs.owner = 'absolute';
+  abs.home = 'omnir';
+  abs.owner = 'omnir';
   abs.security = 0.04;
   abs.prevOwner = 'free';
 
@@ -193,7 +193,7 @@ export function generateMap(seed: number, settings?: GalaxySettings): GalaxyMap 
   for (const h of [...livingHomes.map((h) => h.id), absHome]) hopMaps.set(h, hop(h));
 
   for (const sys of systems) {
-    if (sys.home === 'absolute') continue;
+    if (sys.home === 'omnir') continue;
     let best: FactionId = 'free';
     let bestD = 99;
     let second = 99;
@@ -211,12 +211,12 @@ export function generateMap(seed: number, settings?: GalaxySettings): GalaxyMap 
       bestD = 0;
     }
     if (!sys.home && (bestD >= 4 || absD <= reach)) {
-      sys.owner = absD <= reach ? 'absolute' : 'free';
+      sys.owner = absD <= reach ? 'omnir' : 'free';
     } else if (!sys.home) sys.owner = best;
-    sys.prevOwner = sys.owner === 'absolute' ? (best === 'free' ? 'solari' : best) : sys.owner;
+    sys.prevOwner = sys.owner === 'omnir' ? (best === 'free' ? 'kvissae' : best) : sys.owner;
     const sec = clamp(0.08, 0.95, 0.94 - bestD * 0.16);
-    sys.security = sys.owner === 'free' ? sec * 0.55 : sys.owner === 'absolute' ? 0.04 : sec;
-    if (second <= bestD + 1 && bestD > 0 && sys.owner !== 'free' && sys.owner !== 'absolute') {
+    sys.security = sys.owner === 'free' ? sec * 0.55 : sys.owner === 'omnir' ? 0.04 : sec;
+    if (second <= bestD + 1 && bestD > 0 && sys.owner !== 'free' && sys.owner !== 'omnir') {
       const rival = livingHomes.find((h) => h.f !== sys.owner && (hopMaps.get(h.id)!.get(sys.id) ?? 99) === second);
       if (rival && sys.security < 0.72) {
         sys.challenger = rival.f;
@@ -225,9 +225,9 @@ export function generateMap(seed: number, settings?: GalaxySettings): GalaxyMap 
     }
   }
   for (const sys of systems) {
-    if (sys.owner === 'absolute') {
+    if (sys.owner === 'omnir') {
       sys.security = Math.min(sys.security, 0.08);
-      if (sys.home !== 'absolute') sys.challenger = sys.prevOwner === 'absolute' || sys.prevOwner === 'free' ? 'solari' : sys.prevOwner;
+      if (sys.home !== 'omnir') sys.challenger = sys.prevOwner === 'omnir' || sys.prevOwner === 'free' ? 'kvissae' : sys.prevOwner;
     }
   }
 
@@ -238,13 +238,19 @@ export function generateMap(seed: number, settings?: GalaxySettings): GalaxyMap 
   for (const sys of systems) {
     const count = sys.home ? 3 + Math.floor(rng() * 2) : 2 + Math.floor(rng() * 3);
     for (let i = 0; i < count; i++) {
-      const type: PlanetType = sys.home === 'absolute'
+      const homeWorld: Partial<Record<FactionId, PlanetType>> = {
+        human: 'garden',
+        zhargi: 'volcanic',
+        kvissae: 'barren',
+        taeyori: 'gas',
+        virex: 'hive',
+        omnir: 'hive',
+      };
+      const type: PlanetType = sys.home === 'omnir'
         ? rng() > 0.5 ? 'barren' : 'hive'
         : sys.home
           ? i === 0
-            ? sys.home === 'vekt'
-              ? 'hive'
-              : 'garden'
+            ? homeWorld[sys.home] ?? 'garden'
             : PLANET_TYPES[Math.floor(rng() * PLANET_TYPES.length)]!
           : PLANET_TYPES[Math.floor(rng() * PLANET_TYPES.length)]!;
       const orbit = 700 + i * 620 + rng() * 180;
@@ -268,7 +274,7 @@ export function generateMap(seed: number, settings?: GalaxySettings): GalaxyMap 
       if (!wantStation) continue;
       const station: Station = {
         id: `d${sCount++}`,
-        name: sys.owner === 'absolute' ? `Поглотитель «${planet.name}»` : `Док «${planet.name}»`,
+        name: stationTitle(sys.owner, planet.name),
         systemId: sys.id,
         planetId: planet.id,
         owner: sys.owner,
@@ -290,6 +296,15 @@ export function generateMap(seed: number, settings?: GalaxySettings): GalaxyMap 
   const war = pickWar(systems);
   stampWar(systems, war);
   return { systems, planets, stations, war };
+}
+
+function stationTitle(owner: FactionId, planet: string): string {
+  if (owner === 'omnir') return `Поглотитель «${planet}»`;
+  if (owner === 'zhargi') return `Горн «${planet}»`;
+  if (owner === 'kvissae') return `Пристань «${planet}»`;
+  if (owner === 'taeyori') return `Хор «${planet}»`;
+  if (owner === 'virex') return `Лаборатория «${planet}»`;
+  return `Док «${planet}»`;
 }
 
 function stampWar(systems: StarSystem[], war: { a: FactionId; b: FactionId } | null): void {
@@ -326,7 +341,7 @@ function pickWar(systems: StarSystem[]): { a: FactionId; b: FactionId } | null {
       }
     }
   }
-  return score > 0 ? best : { a: 'regnar', b: 'vekt' };
+  return score > 0 ? best : { a: 'zhargi', b: 'virex' };
 }
 
 function pickHomes(systems: StarSystem[]): string[] {
@@ -348,6 +363,7 @@ function pickHomes(systems: StarSystem[]): string[] {
     chosen.push(best);
   };
   takeFar(core.slice(0, Math.max(6, Math.floor(systems.length * 0.4))));
+  takeFar(scored);
   takeFar(scored);
   takeFar(scored);
   takeFar(scored);

@@ -1,7 +1,7 @@
 import { computeFit } from './fitting';
 import { clamp } from './rng';
 import { dist, findBody } from './query';
-import type { Body, DamageType, FitStats, ShipInstance, World } from './types';
+import { DAMAGE_TYPES, type Body, DamageType, FitStats, ShipInstance, World } from './types';
 
 export function rangeFactor(distance: number, optimal: number, falloff: number): number {
   if (distance <= optimal) return 1;
@@ -48,8 +48,9 @@ export function application(
   return range * track;
 }
 
-export function applyDamage(ship: ShipInstance, fit: FitStats, amount: number, type: DamageType): void {
+export function applyDamage(ship: ShipInstance, fit: FitStats, amount: number, type: DamageType, adapt = false): void {
   let left = Math.max(0, amount);
+  const bonus = adapt ? ship.adapt?.[type] ?? 0 : 0;
   const soak = (layer: 'shield' | 'armor' | 'hull', resist: number) => {
     if (left <= 0) return;
     const hp = ship[layer];
@@ -69,9 +70,15 @@ export function applyDamage(ship: ShipInstance, fit: FitStats, amount: number, t
     ship[layer] = 0;
     left *= 1 - ratio;
   };
-  if (ship.shield > 0) soak('shield', fit.shieldResist[type]);
-  if (left > 0 && ship.armor > 0) soak('armor', fit.armorResist[type]);
-  if (left > 0) soak('hull', 0);
+  if (ship.shield > 0) soak('shield', clamp(fit.shieldResist[type] + bonus, 0, 0.92));
+  if (left > 0 && ship.armor > 0) soak('armor', clamp(fit.armorResist[type] + bonus * 0.65, 0, 0.92));
+  if (left > 0) soak('hull', adapt ? bonus * 0.25 : 0);
+  if (adapt && amount > 0) {
+    const cur = ship.adapt ?? { em: 0, thermal: 0, kinetic: 0, explosive: 0 };
+    cur[type] = Math.min(0.34, cur[type] + 0.05);
+    for (const key of DAMAGE_TYPES) if (key !== type) cur[key] = Math.max(0, cur[key] - 0.012);
+    ship.adapt = cur;
+  }
 }
 
 export interface EwarState {

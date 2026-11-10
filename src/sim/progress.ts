@@ -18,7 +18,7 @@ export const SKILLS: SkillDef[] = [
   { id: 'engineering', name: 'Техника', blurb: 'Верфь и ремонтный док.', perLevel: '+5% сети и процессора, −6% к ремонту' },
   { id: 'trade', name: 'Торговля', blurb: 'Чутьё на цену.', perLevel: '−4% к закупу и +3% к продаже' },
   { id: 'charm', name: 'Обаяние', blurb: 'Доки и контракты.', perLevel: '+15% к приросту репутации и к награде контракта' },
-  { id: 'lead', name: 'Лидерство', blurb: 'Чужие головы и свой залп рядом с союзниками.', perLevel: '+10% к боевой награде и +3% урона за союзника рядом (до трёх)' },
+  { id: 'lead', name: 'Лидерство', blurb: 'Чужие головы и свой залп рядом с союзниками.', perLevel: '+10% к боевой награде и урон за союзника рядом (у Людей до четырёх)' },
   { id: 'survey', name: 'Разведка', blurb: 'Новые системы и захват.', perLevel: '+8% к захвату и +10% опыта за первое посещение' },
 ];
 
@@ -151,10 +151,11 @@ const CAREER_SKILLS: Record<CareerId, Partial<SkillSet>> = {
 };
 
 const RACE_SKILLS: Record<PlayableRace, Partial<SkillSet>> = {
-  solari: { trade: 1 },
-  regnar: { engineering: 1 },
-  nimva: { survey: 1 },
-  vekt: { trade: 1 },
+  human: { charm: 1, lead: 1 },
+  zhargi: { engineering: 1, aim: 1 },
+  kvissae: { trade: 1, helm: 1 },
+  taeyori: { survey: 1 },
+  virex: { engineering: 1 },
 };
 
 const CAREER_PROF: Record<CareerId, Record<string, number>> = {
@@ -199,5 +200,5 @@ export function gateText(proficiency: Record<string, number>, gates: Gate[]): st
 }
 
 export function factionIds(): FactionId[] {
-  return ['solari', 'regnar', 'nimva', 'vekt', 'pirate'];
+  return ['human', 'zhargi', 'kvissae', 'taeyori', 'virex', 'pirate'];
 }

@@ -1,46 +1,147 @@
-import type { DamageType, FactionId, GoodDef, HullDef, ModuleDef, Resists, Role } from './types';
+import type { DamageType, FactionId, GoodDef, HullDef, ModuleDef, PlayableRace, Resists, Role } from './types';
 
 export const FACTION_NAME: Record<FactionId, string> = {
-  solari: 'Лига Солари',
-  regnar: 'Домен Регнар',
-  nimva: 'Собор Нимв',
-  vekt: 'Конгломерат Вект',
-  absolute: 'Рой Абсолют',
+  human: 'Люди',
+  kvissae: 'Квиссаэ',
+  zhargi: 'Зхарги',
+  taeyori: 'Тэйори',
+  virex: 'Вирексы',
+  omnir: 'Омнир',
   free: 'Вольные воды',
   pirate: 'Ржавые клинки',
 };
 
 export const FACTION_SHORT: Record<FactionId, string> = {
-  solari: 'Солари',
-  regnar: 'Регнары',
-  nimva: 'Нимвы',
-  vekt: 'Векты',
-  absolute: 'Абсолют',
+  human: 'Люди',
+  kvissae: 'Квиссаэ',
+  zhargi: 'Зхарги',
+  taeyori: 'Тэйори',
+  virex: 'Вирексы',
+  omnir: 'Омнир',
   free: 'Вольные',
   pirate: 'Пираты',
 };
 
 export const FACTION_COLOR: Record<FactionId, string> = {
-  solari: '#e6b34a',
-  regnar: '#e15a3a',
-  nimva: '#3ecfb2',
-  vekt: '#d08a3a',
-  absolute: '#c86bff',
+  human: '#8fb4d8',
+  kvissae: '#e6c36a',
+  zhargi: '#e25a28',
+  taeyori: '#b388ff',
+  virex: '#d08a4a',
+  omnir: '#ff3348',
   free: '#8aa0b8',
   pirate: '#ff4d5e',
 };
 
+/** Engine plume. Тэйори не жгут след: у них нет двигателей. */
+export const FACTION_ENGINE: Record<FactionId, string> = {
+  human: '#7ecbff',
+  kvissae: '#3ed6c5',
+  zhargi: '#ffb15a',
+  taeyori: '#d7c4ff',
+  virex: '#7ecbff',
+  omnir: '#ff2a3a',
+  free: '#9fd4ff',
+  pirate: '#ff7a45',
+};
+
+export const FACTION_SHOT: Record<FactionId, string> = {
+  human: '#b9dcff',
+  kvissae: '#7dfff0',
+  zhargi: '#ff8a3d',
+  taeyori: '#e4d2ff',
+  virex: '#7eb6ff',
+  omnir: '#ff3355',
+  free: '#d5e4ff',
+  pirate: '#ff5a6a',
+};
+
 export const PLAYER_COLOR = '#9fd4ff';
 
+export interface RaceLore {
+  story: string;
+  ships: string;
+  play: string;
+  voice: string;
+}
+
+export const FACTION_LORE: Record<PlayableRace | 'omnir', RaceLore> = {
+  human: {
+    story: 'Пришли в космос последними и выжили гибкостью. Ладят со всеми, потому что не держатся за одну доктрину.',
+    ships: 'Серо-синие, ионные, но классы не похожи: истребитель на двух балках с кабиной-пузырём, фрегат с вращающимся поясом турелей, грузовик-хребет со съёмными контейнерами, широкий носитель. Пятый корпус — штабная башня на коротком киле.',
+    play: 'Дипломатия и смешанные экипажи. Свободный фит: +12% сети и процессора.',
+    voice: 'Коротко, по делу, без клятвы и без торга.',
+  },
+  zhargi: {
+    story: 'Каменная плоть с магмой. Вулканический мир с тяжёлой гравитацией. Плавят металл теплом ладоней, живут веками и долго помнят обиду.',
+    ships: 'Базальт, бронза и аметист, но формы разные: диск-клинок, обелиск, черепаха-трюм, ворота из двух столбов и кузня-наковальня с горном.',
+    play: 'Толстая броня и тяжёлые орудия, медленный ход. Металл у них дешёвый. ИИ злится и держит обиду.',
+    voice: 'Мало слов, много жара. Обиду называют по имени.',
+  },
+  kvissae: {
+    story: 'Птицеподобные, пальцы на крыльях, острое зрение. Стаи на парящих скалах. Торговля у них вместо религии, перья меняют цвет по настроению.',
+    ships: 'Птичий род, классы разные: стриж, хищник, цапля-грузовоз, веерный крейсер, диск-купец. Золото и бирюза.',
+    play: 'Скорость, груз и лучшие цены. Броня тонкая.',
+    voice: 'Сначала цена, потом приветствие. Перья в словах яркие.',
+  },
+  taeyori: {
+    story: 'Парящие светящиеся медузы с кристаллическим ядром, без рук. Миллионы лет в океане газового гиганта. Телекинез и общий разум: помнят всё, что видел каждый. Кристаллы выращивают и «выпевают», и те работают как машины.',
+    ships: 'Выращенные кристаллы: игла, диск, жеода, собор. Плавающие сегменты и кольца рун вокруг ядра. Двигателей нет.',
+    play: 'Сильные щиты и энергия, саморемонт, инерционный ход. Наука и сведения о карте. ИИ осторожен и нейтрален.',
+    voice: 'Хор, не голос. Говорят «мы» и не торопят ответ.',
+  },
+  virex: {
+    story: 'Слабое тело и десятки тонких манипуляторов. На суровой планете заменили себя механизмами: не понять, где плоть, а где прибор. Апгрейд для них ступень взросления.',
+    ships: 'Мутировавшие кибер-насекомые: оса, жук, моль, богомол, краб. Медь и чёрный, чтобы не слиться с роем.',
+    play: 'Лучшие модули, сенсоры и РЭБ. Дроны. Обслуживание дорогое.',
+    voice: 'Номер сборки, затем просьба. Вежливость как протокол.',
+  },
+  omnir: {
+    story: 'Не народ, а процесс. Поглощает органику и металл, встраивает чужие технологии и подстраивает сопротивления под оружие, которым его бьют. Разум один. Откуда начался — тайна сюжета.',
+    ships: 'Хищные разные формы: жало, клешня, личинка, панцирь, пасть. Красные жилы бьются двойным ударом и затихают; в бою пульс чаще.',
+    play: 'Неиграбелен. Сопротивления растут к тому типу урона, который уже прошёл.',
+    voice: 'Ответа нет. Только помеха и чужие обрывки.',
+  },
+};
+
 export const FACTION_BLURB: Record<FactionId, string> = {
-  solari: 'Торговая лига стеклянных городов. Договоры, дальние лазеры и тонкая дипломатия.',
-  regnar: 'Кланы чести и толстой брони. Их патрули помнят каждый выстрел в спину.',
-  nimva: 'Хранители архивов и медицины. Исследователи с сильными щитами.',
-  vekt: 'Промышленные дома. Руда, дроны и корабли с огромными трюмами.',
-  absolute: 'Самореплицирующийся рой. Не торгует: переписывает системы под себя.',
+  human: FACTION_LORE.human.story,
+  kvissae: FACTION_LORE.kvissae.story,
+  zhargi: FACTION_LORE.zhargi.story,
+  taeyori: FACTION_LORE.taeyori.story,
+  virex: FACTION_LORE.virex.story,
+  omnir: FACTION_LORE.omnir.story,
   free: 'Нейтральные трассы без флага. Здесь дешевле товар и чаще засады.',
   pirate: 'Сборная соль трасс. Считают добычу, риск и путь к отходу.',
 };
+
+export function dockGreeting(owner: FactionId, station: string): string {
+  if (owner === 'human') return `${station}: «Шлюз открыт. Стоянка по общему тарифу.»`;
+  if (owner === 'zhargi') return `${station}: «Металл цел. Обиды — нет. Пока.»`;
+  if (owner === 'kvissae') return `${station}: «Перо к перу. Сначала цена, потом причал.»`;
+  if (owner === 'taeyori') return `${station}: «Мы уже помним ваш корпус. Входите без стука.»`;
+  if (owner === 'virex') return `${station}: «Стыковка принята. Обслуживание тарифицируется.»`;
+  if (owner === 'pirate') return `${station}: «Пушки в кобуру. Здесь считают добычу, не флаги.»`;
+  return `${station}: «Причал свободен.»`;
+}
+
+export function hailVoice(faction: FactionId, role: Role, name: string, station: boolean): string {
+  if (station) {
+    if (faction === 'zhargi') return `${name}: горн слушает. Говорите коротко.`;
+    if (faction === 'kvissae') return `${name}: канал открыт. Назовите товар или уходите с вектора.`;
+    if (faction === 'taeyori') return `${name}: мы слышим. Ответ придёт, когда хор согласится.`;
+    if (faction === 'virex') return `${name}: протокол связи. Назовите сборку и запрос.`;
+    if (faction === 'human') return `${name}: на связи. Чем помочь?`;
+    return `${name}: шлюз слушает.`;
+  }
+  if (faction === 'omnir') return `${name} отвечает только помехами и чужими обрывками.`;
+  if (faction === 'zhargi') return `${name}: «Говори. Обиду я запомню дольше, чем ты.»`;
+  if (faction === 'kvissae') return role === 'trader' ? `${name}: «Курс живой. Не стой на моём ветре.»` : `${name}: «Перья спокойные. Пока.»`;
+  if (faction === 'taeyori') return `${name}: «Мы видим вас. Спешить некому.»`;
+  if (faction === 'virex') return `${name}: «Канал чистый. Дроны на поводке, не дёргайтесь.»`;
+  if (role === 'pirate') return `${name}: «Груз или пыль. Выбирай быстро.»`;
+  return `${name}: «На связи. Дистанцию держите.»`;
+}
 
 export const ROLE_NAME: Record<Role, string> = {
   trader: 'торговец',
@@ -668,7 +769,7 @@ export const PLANET_NAME: Record<string, string> = {
 export const STARTER_FIT: (string | null)[] = ['igla', null, 'veil', 'poryv', 'klin', 'zapas', null];
 
 export function emptyRep(): Record<FactionId, number> {
-  return { solari: 0, regnar: 0, nimva: 0, vekt: 0, absolute: -100, free: 0, pirate: 0 };
+  return { human: 0, kvissae: 0, zhargi: 0, taeyori: 0, virex: 0, omnir: -100, free: 0, pirate: 0 };
 }
 
 export function slotLayout(hull: HullDef): ('high' | 'mid' | 'low' | 'rig')[] {

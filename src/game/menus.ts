@@ -1,5 +1,5 @@
 import { CAREERS, CAREER_BY_ID, DIFF_LABEL, ECON_LABEL, INVADER_LABEL, RACE_INFO, RACE_ORDER, SIZE_LABEL, introText, skillsFor } from '../sim/origin';
-import { FACTION_NAME, FACTION_SHORT, HULL_BY_ID } from '../sim/content';
+import { FACTION_BLURB, FACTION_LORE, FACTION_NAME, FACTION_SHORT, HULL_BY_ID } from '../sim/content';
 import {
   PROF_XP,
   RANKS,
@@ -29,7 +29,7 @@ export interface Draft {
 }
 
 export function mainMenuHtml(hasSave: boolean): string {
-  return `<div class="menu-card"><h1>КРОМКА</h1><p class="sub">Живая пустота. Каждое зерно — другая галактика. Карьера только толкает в начале: дальше решает, чем вы летаете и с кем торгуете.</p><div class="stack"><button type="button" class="primary" data-act="new">Новая игра</button><button type="button" data-act="continue" ${hasSave ? '' : 'disabled'}>Продолжить</button><button type="button" data-act="load">Загрузить</button><label>Импорт сохранения<input id="import-file" type="file" accept="application/json,.json"></label><button type="button" data-act="settings">Настройки</button><button type="button" data-act="help">Управление</button></div></div>`;
+  return `<div class="menu-card"><h1>КРОМКА</h1><p class="sub">Живая пустота. Каждое зерно — другая галактика. Карьера только толкает в начале: дальше решает, чем вы летаете и с кем торгуете.</p><div class="stack"><button type="button" class="primary" data-act="new">Новая игра</button><button type="button" data-act="continue" ${hasSave ? '' : 'disabled'}>Продолжить</button><button type="button" data-act="load">Загрузить</button><label>Импорт сохранения<input id="import-file" type="file" accept="application/json,.json"></label><button type="button" data-act="lore">Народы</button><button type="button" data-act="settings">Настройки</button><button type="button" data-act="help">Управление</button></div></div>`;
 }
 
 export function loadHtml(world: World | null): string {
@@ -42,8 +42,18 @@ export function loadHtml(world: World | null): string {
   return `<div class="menu-card"><h2>Сохранение на устройстве</h2><p><b>${esc(world.player.name)}</b> · ${esc(race)} · ${esc(career)}</p><p class="sub">Зерно ${world.seed} · ${clock(world.time)} · ${Math.round(world.player.credits).toLocaleString('ru-RU')} кр.</p><div class="stack"><button type="button" class="primary" data-act="continue">Открыть</button><button type="button" data-act="back-menu">Назад</button></div></div>`;
 }
 
-export function settingsHtml(soundOn: boolean): string {
-  return `<div class="menu-card"><h2>Настройки</h2><p class="sub">Пауза только в меню и когда вкладка скрыта. Бой не останавливается отдельной кнопкой.</p><div class="stack"><button type="button" data-act="sound">Звук: ${soundOn ? 'вкл' : 'выкл'}</button><button type="button" data-act="back-menu">Назад</button></div></div>`;
+export function loreHtml(): string {
+  const ids = [...RACE_ORDER, 'omnir' as const];
+  const cards = ids.map((id) => {
+    const lore = FACTION_LORE[id];
+    return `<article class="lore-card"><h3>${esc(FACTION_NAME[id])}</h3><p>${esc(lore.story)}</p><p class="sub">${esc(lore.ships)}</p><p class="sub">${esc(lore.play)}</p><p class="sub">${esc(lore.voice)}</p></article>`;
+  }).join('');
+  return `<div class="menu-card wide"><h2>Народы</h2><div class="lore">${cards}</div><button type="button" data-act="back-menu">Назад</button></div>`;
+}
+
+export function settingsHtml(soundOn: boolean, quality: string): string {
+  const q = (id: string, label: string) => `<button type="button" data-act="quality" data-q="${id}" class="${quality === id ? 'on' : ''}">${label}</button>`;
+  return `<div class="menu-card"><h2>Настройки</h2><p class="sub">Пауза только в меню и когда вкладка скрыта. Качество картинки само ставится по телефону или компьютеру, его можно сменить.</p><div class="row">${q('auto', 'Авто')}${q('low', 'Низкое')}${q('medium', 'Среднее')}${q('high', 'Высокое')}</div><div class="stack"><button type="button" data-act="sound">Звук: ${soundOn ? 'вкл' : 'выкл'}</button><button type="button" data-act="back-menu">Назад</button></div></div>`;
 }
 
 export function wizardHtml(step: string, draft: Draft): string {
@@ -51,7 +61,7 @@ export function wizardHtml(step: string, draft: Draft): string {
   if (step === 'race') {
     const cards = RACE_ORDER.map((race) => {
       const on = draft.race === race ? ' on' : '';
-      return `<button type="button" class="choice${on}" data-act="pick-race" data-race="${race}"><b>${esc(FACTION_NAME[race])}</b><span>${esc(RACE_INFO[race].bonus)}</span></button>`;
+      return `<button type="button" class="choice${on}" data-act="pick-race" data-race="${race}"><canvas class="emblem" data-race="${race}" width="42" height="42"></canvas><b>${esc(FACTION_NAME[race])}</b><span>${esc(FACTION_BLURB[race])}</span><span>${esc(RACE_INFO[race].bonus)}</span></button>`;
     }).join('');
     return `<div class="menu-card wide"><h2>Народ</h2><p class="sub">Шаг 1 из 4. Бонус только на старте, звание потом копится само.</p><div class="choices">${cards}</div><div class="row">${back}</div></div>`;
   }
@@ -59,12 +69,12 @@ export function wizardHtml(step: string, draft: Draft): string {
     const cards = CAREERS.map((career) => {
       const on = draft.career === career.id ? ' on' : '';
       const hull = HULL_BY_ID[career.hullId]?.name ?? career.hullId;
-      return `<button type="button" class="choice${on}" data-act="pick-career" data-career="${career.id}"><b>${esc(career.name)}</b><span>${esc(career.blurb)} Корпус «${esc(hull)}», ${career.credits.toLocaleString('ru-RU')} кр.</span></button>`;
+      return `<button type="button" class="choice${on}" data-act="pick-career" data-career="${career.id}"><canvas class="badge" data-career="${career.id}" width="42" height="42"></canvas><b>${esc(career.name)}</b><span>${esc(career.blurb)} Корпус «${esc(hull)}», ${career.credits.toLocaleString('ru-RU')} кр.</span></button>`;
     }).join('');
     return `<div class="menu-card wide"><h2>Старт</h2><p class="sub">Шаг 2 из 4. Это не класс навсегда: другой корпус откроется, когда освоите предыдущий.</p><div class="choices">${cards}</div><div class="row">${back}</div></div>`;
   }
   if (step === 'face') {
-    return `<div class="menu-card"><h2>Капитан</h2><p class="sub">Шаг 3 из 4. Портрет рисуется из числа, его можно перекинуть.</p><canvas id="portrait" width="160" height="200"></canvas><div class="stack"><label>Имя<input id="hero-name" maxlength="24" value="${esc(draft.name)}"></label><button type="button" data-act="roll-face">Другой портрет</button><div class="row">${back}<button type="button" class="primary" data-act="wiz-next">Дальше</button></div></div></div>`;
+    return `<div class="menu-card"><h2>Капитан</h2><p class="sub">Шаг 3 из 4. Лицо, глаза и одежда собираются слоями. Вариант ${draft.portrait}.</p><canvas id="portrait" width="180" height="230"></canvas><div class="row"><button type="button" data-act="face-prev">←</button><button type="button" data-act="roll-face">Случайный</button><button type="button" data-act="face-next">→</button></div><div class="stack"><label>Имя<input id="hero-name" maxlength="24" value="${esc(draft.name)}"></label><div class="row">${back}<button type="button" class="primary" data-act="wiz-next">Дальше</button></div></div></div>`;
   }
   if (step === 'galaxy') {
     return `<div class="menu-card wide"><h2>Край</h2><p class="sub">Шаг 4 из 4.</p>${choiceRow('size', draft.size, SIZE_LABEL)}<h3>Сложность</h3>${choiceRow('difficulty', draft.difficulty, DIFF_LABEL)}<h3>Абсолют</h3>${choiceRow('invaders', draft.invaders, INVADER_LABEL)}<h3>Биржа</h3>${choiceRow('economy', draft.economy, ECON_LABEL)}<label>Зерно<input id="galaxy-seed" inputmode="numeric" value="${esc(draft.seed)}"></label><div class="row"><button type="button" data-act="roll-seed">Случайное зерно</button>${back}<button type="button" class="primary" data-act="wiz-tale">Дальше</button></div></div>`;
@@ -97,7 +107,7 @@ export function pilotHtml(player: Player): string {
     const pct = level >= PROF_XP.length - 1 ? 100 : Math.round(((xp - prev) / Math.max(1, next - prev)) * 100);
     return `<div class="skill"><div><b>${esc(track.name)}</b> ${level}<div class="sub">${esc(track.blurb)}</div><i class="meter" style="width:${pct}%"></i></div></div>`;
   }).join('');
-  const ranks = (['solari', 'regnar', 'nimva', 'vekt', 'pirate'] as const).map((id) => {
+  const ranks = (['human', 'kvissae', 'zhargi', 'taeyori', 'virex', 'pirate'] as const).map((id) => {
     const rep = Math.round(player.reputation[id] ?? 0);
     const rank = rankOf(rep);
     return `<span>${esc(FACTION_SHORT[id])}: ${esc(rank.name)} (${rep})</span>`;

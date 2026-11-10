@@ -13,10 +13,11 @@ const PROFILE: Record<PlanetType, { out: Record<string, number>; inn: Record<str
 };
 
 const RACE_OUT: Partial<Record<FactionId, Record<string, number>>> = {
-  solari: { pearl: 1.45, plates: 1.35, data: 1.5 },
-  regnar: { cells: 1.55, alloy: 1.15 },
-  nimva: { data: 1.6, meds: 1.45 },
-  vekt: { ore: 1.4, alloy: 1.35, drones: 1.4 },
+  human: { food: 1.2, plates: 1.15 },
+  zhargi: { ore: 1.85, alloy: 1.75, cells: 1.25 },
+  kvissae: { pearl: 1.5, food: 1.2, data: 1.25 },
+  taeyori: { data: 1.8, meds: 1.35, iso: 1.25 },
+  virex: { drones: 1.65, plates: 1.5, alloy: 1.15 },
 };
 
 export function makeMarket(
@@ -33,11 +34,12 @@ export function makeMarket(
     let out = profile.out[id] ?? 0;
     let inn = profile.inn[id] ?? 0;
     if (race[id]) out *= race[id];
-    if (faction === 'absolute') {
+    if (faction === 'omnir') {
       out *= 0.12;
       inn *= 1.35;
     }
-    if (id === 'data' && (faction === 'nimva' || security > 0.7)) out += 0.18;
+    if (id === 'data' && (faction === 'taeyori' || security > 0.7)) out += 0.18;
+    if ((id === 'ore' || id === 'alloy') && faction === 'zhargi') out += 0.2;
     if (id === 'cells' && security < 0.35) inn += 0.12;
     const weight = out + inn;
     const capacity = Math.round(220 + weight * 520 + (out > inn ? 80 : 0));

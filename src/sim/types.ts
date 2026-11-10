@@ -2,8 +2,8 @@ export const SIM_HZ = 20;
 export const SIM_DT = 1 / SIM_HZ;
 export const SAVE_VERSION = 1;
 
-export type FactionId = 'solari' | 'regnar' | 'nimva' | 'vekt' | 'absolute' | 'free' | 'pirate';
-export type PlayableRace = 'solari' | 'regnar' | 'nimva' | 'vekt';
+export type FactionId = 'human' | 'kvissae' | 'zhargi' | 'taeyori' | 'virex' | 'omnir' | 'free' | 'pirate';
+export type PlayableRace = 'human' | 'kvissae' | 'zhargi' | 'taeyori' | 'virex';
 export type CareerId = 'trader' | 'soldier' | 'hunter' | 'explorer' | 'pirate';
 export type GalaxySize = 'small' | 'medium' | 'large';
 export type Difficulty = 'calm' | 'captain' | 'harsh';
@@ -17,7 +17,7 @@ export type PlanetType = 'volcanic' | 'ocean' | 'barren' | 'ice' | 'gas' | 'gard
 export type StarKind = 'yellow' | 'red' | 'blue' | 'white' | 'orange';
 export type AiState = 'dock' | 'travel' | 'patrol' | 'hunt' | 'flee' | 'explore' | 'invade' | 'escort';
 
-export const LIVING_FACTIONS: FactionId[] = ['solari', 'regnar', 'nimva', 'vekt'];
+export const LIVING_FACTIONS: FactionId[] = ['human', 'kvissae', 'zhargi', 'taeyori', 'virex'];
 export const DAMAGE_TYPES: DamageType[] = ['em', 'thermal', 'kinetic', 'explosive'];
 
 export interface Resists {
@@ -121,6 +121,8 @@ export interface ShipInstance {
   armor: number;
   hull: number;
   cap: number;
+  /** Омнир копит сопротивление к типу урона, которым его уже били. */
+  adapt?: Resists;
 }
 
 export interface Nav {
@@ -221,6 +223,9 @@ export interface PilotAI {
   visited: string[];
   escortMissionId: string | null;
   announced: boolean;
+  /** Зхарги держат обидчика, пока не истечёт время. */
+  grudgeId: string | null;
+  grudgeUntil: number;
 }
 
 export interface Pilot extends Body {
@@ -362,6 +367,8 @@ export interface Ping {
   text: string;
   color: string;
   kind: 'hit' | 'explode' | 'info';
+  fromX?: number;
+  fromY?: number;
 }
 
 export type SkillId = 'aim' | 'helm' | 'engineering' | 'trade' | 'charm' | 'lead' | 'survey';

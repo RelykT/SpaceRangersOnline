@@ -10,16 +10,16 @@ describe('навыки и освоение', () => {
       const fit = canFitModules(career.hullId, career.modules);
       expect(fit.ok, career.id + fit.reason).toBe(true);
     }
-    const trader = createWorld(4, 'Тест', { race: 'vekt', career: 'trader', portrait: 3 });
+    const trader = createWorld(4, 'Тест', { race: 'virex', career: 'trader', portrait: 3 });
     expect(trader.player.ship.hullId).toBe('korob');
     expect(trader.player.skills.trade).toBeGreaterThan(0);
     expect(trader.player.spent).toBe(0);
     expect(gateText(trader.player.proficiency, HULL_GATES.klinok ?? [])).toBeTruthy();
-    const soldier = createWorld(4, 'Тест', { race: 'regnar', career: 'soldier' });
+    const soldier = createWorld(4, 'Тест', { race: 'zhargi', career: 'soldier' });
     expect(soldier.player.ship.hullId).toBe('klinok');
     expect(gateText(soldier.player.proficiency, HULL_GATES.klinok ?? [])).toBeNull();
-    expect(soldier.player.faction).toBe('regnar');
-    expect(systemHome(soldier)).toBe('regnar');
+    expect(soldier.player.faction).toBe('zhargi');
+    expect(systemHome(soldier)).toBe('zhargi');
   });
 
   it('очко навыка тратится и не запирает другие ветки', () => {
@@ -52,8 +52,8 @@ describe('навыки и освоение', () => {
     const small = createWorld(15, 'Тест', { settings: { size: 'small', difficulty: 'calm', invaders: 'sleeping', economy: 'flat' } });
     const large = createWorld(15, 'Тест', { settings: { size: 'large', difficulty: 'harsh', invaders: 'tide', economy: 'storm' } });
     expect(small.systems.length).toBeLessThan(large.systems.length);
-    expect(small.systems.filter((s) => s.owner === 'absolute').length).toBeLessThanOrEqual(
-      large.systems.filter((s) => s.owner === 'absolute').length,
+    expect(small.systems.filter((s) => s.owner === 'omnir').length).toBeLessThanOrEqual(
+      large.systems.filter((s) => s.owner === 'omnir').length,
     );
   });
 });

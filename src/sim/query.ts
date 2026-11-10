@@ -68,7 +68,7 @@ export function stationTech(world: World, station: Station): number {
   if (sys.security >= 0.75) t = 3;
   if (sys.home && sys.security >= 0.62) t = Math.max(t, 4);
   if (sys.owner === 'free') t = Math.min(t, 2);
-  if (sys.owner === 'absolute') t = 1;
+  if (sys.owner === 'omnir') t = 1;
   return t;
 }
 
@@ -77,5 +77,5 @@ export function dist(ax: number, ay: number, bx: number, by: number): number {
 }
 
 export function livingStations(world: World): Station[] {
-  return world.stations.filter((s) => s.owner !== 'absolute');
+  return world.stations.filter((s) => s.owner !== 'omnir');
 }

@@ -21,27 +21,31 @@ export const DEFAULT_SETTINGS: GalaxySettings = {
   economy: 'live',
 };
 
-export const RACE_ORDER: PlayableRace[] = ['solari', 'regnar', 'nimva', 'vekt'];
+export const RACE_ORDER: PlayableRace[] = ['human', 'zhargi', 'kvissae', 'taeyori', 'virex'];
 
 export const RACE_INFO: Record<
   PlayableRace,
   { bonus: string; rep: Partial<Record<FactionId, number>> }
 > = {
-  solari: {
-    bonus: 'Старт: +1 Торговля. Свои и Нимвы встречают теплее.',
-    rep: { solari: 42, regnar: 6, nimva: 18, vekt: 8, pirate: -4 },
+  human: {
+    bonus: 'Универсалы. +1 Обаяние и лидерство, +12% сети и процессора, смешанный экипаж бьёт сильнее.',
+    rep: { human: 28, kvissae: 10, zhargi: 8, taeyori: 8, virex: 8, pirate: -2 },
   },
-  regnar: {
-    bonus: 'Старт: +1 Техника, броня толще. С Вектами холодно.',
-    rep: { solari: 4, regnar: 44, nimva: 2, vekt: -12, pirate: -8 },
+  zhargi: {
+    bonus: 'Воины-кузнецы. +1 Техника и точность, толстая броня, тяжёлый залп, медленный ход. Металл дешёвый.',
+    rep: { human: 6, kvissae: 2, zhargi: 44, taeyori: 0, virex: -14, pirate: -8 },
   },
-  nimva: {
-    bonus: 'Старт: +1 Разведка, щит крепче. Солари считают вас гостем.',
-    rep: { solari: 16, regnar: 2, nimva: 42, vekt: 6, pirate: -4 },
+  kvissae: {
+    bonus: 'Торговцы. +1 Торговля и манёвр, скорость и трюм, лучшие цены, тонкая броня.',
+    rep: { human: 10, kvissae: 42, zhargi: 4, taeyori: 12, virex: 8, pirate: -6 },
   },
-  vekt: {
-    bonus: 'Старт: +1 Торговля и просторный трюм.',
-    rep: { solari: 10, regnar: -8, nimva: 6, vekt: 42, pirate: -6 },
+  taeyori: {
+    bonus: 'Древние. +1 Разведка, сильный щит, саморемонт, инерция, карта помнится дольше.',
+    rep: { human: 8, kvissae: 12, zhargi: 2, taeyori: 42, virex: 4, pirate: -2 },
+  },
+  virex: {
+    bonus: 'Технократы. +1 Техника, сенсоры и процессор, дорогой ремонт.',
+    rep: { human: 6, kvissae: 8, zhargi: -10, taeyori: 4, virex: 42, pirate: -6 },
   },
 };
 
@@ -122,25 +126,25 @@ export function skillBonus(skills: SkillSet, race: PlayableRace, allies = 0): Fi
   repair: number;
   explore: number;
 } {
-  const friends = Math.max(0, Math.min(3, allies));
+  const friends = Math.max(0, Math.min(race === 'human' ? 4 : 3, allies));
   return {
-    dmg: 1 + 0.03 * friends,
-    speed: 1 + 0.05 * skills.helm,
-    shield: race === 'nimva' ? 1.12 : 1,
-    armor: (race === 'regnar' ? 1.12 : 1) * (1 + 0.03 * skills.engineering),
-    cargo: race === 'vekt' ? 1.18 : 1,
-    scan: 1 + 0.08 * skills.survey,
-    opt: 1 + 0.04 * skills.aim,
-    pg: 1 + 0.05 * skills.engineering,
-    cpu: 1 + 0.05 * skills.engineering,
-    agility: 1 + 0.08 * skills.helm,
-    tradeBuy: Math.max(0.7, 1 - 0.04 * skills.trade),
-    tradeSell: 1 + 0.03 * skills.trade,
-    repGain: 1 + 0.15 * skills.charm,
+    dmg: (1 + (race === 'human' ? 0.05 : 0.03) * friends) * (race === 'zhargi' ? 1.08 : 1),
+    speed: (1 + 0.05 * skills.helm) * (race === 'zhargi' ? 0.86 : race === 'kvissae' ? 1.14 : race === 'taeyori' ? 0.96 : 1),
+    shield: race === 'taeyori' ? 1.22 : race === 'human' ? 1.04 : 1,
+    armor: (race === 'zhargi' ? 1.2 : race === 'kvissae' ? 0.78 : race === 'human' ? 1.04 : 1) * (1 + 0.03 * skills.engineering),
+    cargo: (race === 'kvissae' ? 1.24 : race === 'human' ? 1.06 : 1),
+    scan: (1 + 0.08 * skills.survey) * (race === 'virex' ? 1.22 : race === 'taeyori' ? 1.12 : 1),
+    opt: (1 + 0.04 * skills.aim) * (race === 'virex' ? 1.06 : 1),
+    pg: (1 + 0.05 * skills.engineering) * (race === 'human' ? 1.12 : 1),
+    cpu: (1 + 0.05 * skills.engineering) * (race === 'human' ? 1.12 : race === 'virex' ? 1.1 : 1),
+    agility: (1 + 0.08 * skills.helm) * (race === 'zhargi' ? 0.82 : race === 'taeyori' ? 0.78 : race === 'kvissae' ? 1.1 : 1),
+    tradeBuy: Math.max(0.62, (1 - 0.04 * skills.trade) * (race === 'kvissae' ? 0.9 : 1)),
+    tradeSell: (1 + 0.03 * skills.trade) * (race === 'kvissae' ? 1.05 : 1),
+    repGain: (1 + 0.15 * skills.charm) * (race === 'human' ? 1.2 : 1),
     reward: 1 + 0.04 * skills.charm,
     bounty: 1 + 0.1 * skills.lead,
-    repair: Math.max(0.55, 1 - 0.06 * skills.engineering),
-    explore: 1 + 0.1 * skills.survey,
+    repair: Math.max(0.5, (1 - 0.06 * skills.engineering) * (race === 'virex' ? 1.45 : race === 'zhargi' ? 0.88 : 1)),
+    explore: (1 + 0.1 * skills.survey) * (race === 'taeyori' ? 1.25 : 1),
   };
 }
 
@@ -150,7 +154,7 @@ export function startingReputation(origin: CaptainOrigin): Record<FactionId, num
   for (const key of Object.keys(rep) as FactionId[]) {
     if (row[key] != null) rep[key] = row[key]!;
   }
-  rep.absolute = -100;
+  rep.omnir = -100;
   if (origin.career === 'pirate') {
     for (const race of RACE_ORDER) rep[race] -= 18;
     rep.pirate += 25;
@@ -175,7 +179,7 @@ export function systemCount(size: GalaxySize, roll: number): number {
   return 28 + Math.floor(roll * 5);
 }
 
-export function absoluteReach(mood: InvaderMood): number {
+export function omnirReach(mood: InvaderMood): number {
   if (mood === 'sleeping') return 0;
   if (mood === 'tide') return 2;
   return 1;
@@ -196,10 +200,11 @@ export function pirateSecurity(difficulty: Difficulty | undefined): number {
 export function introText(origin: CaptainOrigin, stationName: string, systemName: string): string {
   const career = CAREER_BY_ID[origin.career].name.toLowerCase();
   const raceLine: Record<PlayableRace, string> = {
-    solari: 'Лига выдала вам доковый жетон и вежливое предупреждение не портить курс.',
-    regnar: 'Клан проводил вас до шлюза. Долг чести записан, но корабль уже ваш.',
-    nimva: 'В архиве Собора осталась копия вашего имени. Щиты настроены на местную звезду.',
-    vekt: 'Конгломерат отгрузил корпус в счёт будущего рейса. Накладные ещё тёплые.',
+    human: 'Люди не выдают доктрину. Корабль ваш, маршрут тоже.',
+    kvissae: 'Стая проводила вас до пристани и сразу назвала цену стоянки.',
+    zhargi: 'Горн остыл ровно настолько, чтобы выйти. Обиды клана записаны в камень.',
+    taeyori: 'Хор запомнил ваше имя целиком. Щит уже поёт в лад со звездой.',
+    virex: 'Лаборатория отгрузила корпус. Счёт за обслуживание придёт отдельно.',
   };
   const jobLine: Record<CareerId, string> = {
     trader: 'Трюм пахнет сплавом. Где-то рядом цена уже врёт.',
@@ -224,9 +229,9 @@ export const DIFF_LABEL: Record<Difficulty, [string, string]> = {
 };
 
 export const INVADER_LABEL: Record<InvaderMood, [string, string]> = {
-  sleeping: ['Дремлет', 'Абсолют сидит в своём гнезде.'],
+  sleeping: ['Дремлет', 'Омнир сидит в своём гнезде.'],
   waking: ['Просыпается', 'Рой уже трогает соседние системы.'],
-  tide: ['Прилив', 'Захваты частые, подмога роя быстрая.'],
+  tide: ['Прилив', 'Захваты частые, подмога Омнира быстрая.'],
 };
 
 export const ECON_LABEL: Record<EconomyMood, [string, string]> = {

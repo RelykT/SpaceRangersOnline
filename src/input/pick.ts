@@ -1,6 +1,6 @@
 /** Screen-space picking. Pure: no DOM. Sprite size never shrinks the hit area below the minimum. */
 
-export const Y_SQUASH = 0.82;
+export const Y_SQUASH = 0.7;
 
 export const HIT_PX = {
   mouse: 28,

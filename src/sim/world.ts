@@ -3,6 +3,8 @@ import { applyDamage, application, ewarAgainst, lockSeconds, transversal } from 
 import {
   DTYPE_COLOR,
   FACTION_NAME,
+  FACTION_SHOT,
+  dockGreeting,
   GOOD_BY_ID,
   HULL_BY_ID,
   MODULE_BY_ID,
@@ -98,7 +100,7 @@ export function createWorld(seed: number, playerName: string, options: NewGameOp
     player: undefined as unknown as Player,
   } as World;
   populate(world);
-  const origin = makeOrigin(options.race ?? 'solari', options.career ?? 'explorer', options.portrait ?? 1);
+  const origin = makeOrigin(options.race ?? 'kvissae', options.career ?? 'explorer', options.portrait ?? 1);
   world.player = makePlayer(world, playerName.trim().slice(0, 24) || 'Илль Сед', origin);
   addIntro(world);
   const home = stationById(world, world.player.dockedAt ?? '');
@@ -111,7 +113,7 @@ export function createWorld(seed: number, playerName: string, options: NewGameOp
 function fitOf(body: Body, scrammed = false) {
   if (body.id !== 'player') return computeFit(body.ship, { scrammed });
   const player = body as Player;
-  const race = player.origin?.race ?? 'solari';
+  const race = player.origin?.race ?? 'kvissae';
   const skills = player.skills ?? player.origin?.skills;
   return computeFit(body.ship, { scrammed, bonus: skills ? skillBonus(skills, race) : undefined });
 }
@@ -121,7 +123,7 @@ function makePlayer(world: World, name: string, origin: CaptainOrigin): Player {
     .filter((st) => systemById(world, st.systemId)?.home === origin.race)
     .sort((a, b) => (a.id < b.id ? -1 : 1));
   const same = world.stations.filter((st) => st.owner === origin.race).sort((a, b) => (a.id < b.id ? -1 : 1));
-  const station = homes[0] ?? same[0] ?? world.stations.find((st) => st.owner !== 'absolute') ?? world.stations[0]!;
+  const station = homes[0] ?? same[0] ?? world.stations.find((st) => st.owner !== 'omnir') ?? world.stations[0]!;
   const career = CAREER_BY_ID[origin.career];
   const ship = freshShip(career.hullId, career.modules);
   const skills = { ...origin.skills };
@@ -175,7 +177,7 @@ function addIntro(world: World): void {
   const home = stationById(world, world.player.dockedAt ?? '');
   if (!home) return;
   const dest = world.stations
-    .filter((s) => s.id !== home.id && s.owner !== 'absolute')
+    .filter((s) => s.id !== home.id && s.owner !== 'omnir')
     .map((s) => ({ s, path: findPath(world, home.systemId, s.systemId) }))
     .filter((x) => x.path && x.path.length >= 2 && x.path.length <= 3)
     .sort((a, b) => a.s.id.localeCompare(b.s.id))[0]?.s ?? world.stations.find((s) => s.id !== home.id);
@@ -188,7 +190,7 @@ function addIntro(world: World): void {
     title: 'Первый контракт: зеркальный сплав',
     desc: `Док выдаёт 12 ед. зеркального сплава. Довезите их на ${dest.name}, не продав по пути. Награда ждёт на месте.`,
     reward: 4600,
-    repFaction: home.owner === 'free' ? 'solari' : home.owner,
+    repFaction: home.owner === 'free' ? 'kvissae' : home.owner,
     repAmount: 5,
     expires: 900,
     goodId: 'alloy',
@@ -202,9 +204,43 @@ function addIntro(world: World): void {
   });
 }
 
+const LEGACY_FACTION: Record<string, FactionId> = {
+  eira: 'human',
+  solari: 'kvissae',
+  regnar: 'zhargi',
+  nimva: 'taeyori',
+  vekt: 'virex',
+  absolute: 'omnir',
+};
+
+function migrateFaction(id: string): FactionId {
+  return LEGACY_FACTION[id] ?? (id as FactionId);
+}
+
 export function rehydrate(world: World): World {
   world.settings ??= { ...DEFAULT_SETTINGS };
-  world.player.origin ??= makeOrigin(world.player.faction === 'regnar' || world.player.faction === 'nimva' || world.player.faction === 'vekt' ? world.player.faction : 'solari', 'explorer', 1);
+  world.player.faction = migrateFaction(String(world.player.faction));
+  for (const sys of world.systems ?? []) {
+    sys.owner = migrateFaction(String(sys.owner));
+    if (sys.home) sys.home = migrateFaction(String(sys.home));
+    if (sys.challenger) sys.challenger = migrateFaction(String(sys.challenger));
+    if (sys.prevOwner) sys.prevOwner = migrateFaction(String(sys.prevOwner));
+  }
+  for (const st of world.stations ?? []) st.owner = migrateFaction(String(st.owner));
+  for (const pilot of world.pilots ?? []) {
+    pilot.faction = migrateFaction(String(pilot.faction));
+    pilot.ai.grudgeId ??= null;
+    pilot.ai.grudgeUntil ??= 0;
+  }
+  if (world.player.reputation) {
+    const next = emptyRep();
+    for (const [key, value] of Object.entries(world.player.reputation)) next[migrateFaction(key)] = value;
+    world.player.reputation = next;
+  }
+  const known = migrateFaction(String(world.player.origin?.race ?? world.player.faction));
+  const race = known === 'human' || known === 'zhargi' || known === 'taeyori' || known === 'virex' || known === 'kvissae' ? known : 'human';
+  if (world.player.origin) world.player.origin.race = race;
+  world.player.origin ??= makeOrigin(race, 'explorer', 1);
   world.player.skills ??= { ...world.player.origin.skills };
   world.player.xp ??= 0;
   world.player.spent ??= 0;
@@ -345,7 +381,7 @@ function onPlayerArrived(world: World): void {
   pushLog(world, `Выход в системе ${sys?.name ?? world.player.systemId}.`);
   if (!world.player.visited.includes(world.player.systemId)) {
     world.player.visited.push(world.player.systemId);
-    const explore = world.player.skills ? skillBonus(world.player.skills, world.player.origin?.race ?? 'solari').explore : 1;
+    const explore = world.player.skills ? skillBonus(world.player.skills, world.player.origin?.race ?? 'kvissae').explore : 1;
     grantXp(world, 22 * explore);
   }
   const route = world.player.route;
@@ -383,6 +419,7 @@ function resolveDocking(world: World): void {
     world.player.warp = null;
     const st = stationById(world, docking.stationId);
     pushLog(world, `Стыковка: ${st?.name ?? 'док'}.`);
+    if (st) pushLog(world, dockGreeting(st.owner, st.name));
   }
 }
 
@@ -585,7 +622,7 @@ function beginDock(world: World, stationId: string, quiet: boolean): void {
     pushLog(world, 'Док в другой системе.');
     return;
   }
-  if (st.owner === 'absolute' || (st.owner !== 'free' && (player.reputation[st.owner] ?? 0) < -40)) {
+  if (st.owner === 'omnir' || (st.owner !== 'free' && (player.reputation[st.owner] ?? 0) < -40)) {
     pushLog(world, `${st.name} не открывает шлюз.`);
     player.pendingDock = null;
     return;
@@ -674,7 +711,7 @@ function tradeBuy(world: World, goodId: string, qty: number): void {
     pushLog(world, 'Покупка не прошла: деньги, трюм или запас.');
     return;
   }
-  const mood = world.player.skills ? skillBonus(world.player.skills, world.player.origin?.race ?? 'solari') : null;
+  const mood = world.player.skills ? skillBonus(world.player.skills, world.player.origin?.race ?? 'kvissae') : null;
   const pay = Math.round(bought.credits * (mood?.tradeBuy ?? 1) * dockDiscount(world, st.owner));
   world.player.credits -= pay;
   grantXp(world, pay / 160);
@@ -692,7 +729,7 @@ function tradeSell(world: World, goodId: string, qty: number): void {
   if (sold.qty <= 0) return;
   world.player.cargo[goodId] = have - sold.qty;
   if ((world.player.cargo[goodId] ?? 0) <= 0) delete world.player.cargo[goodId];
-  const mood = world.player.skills ? skillBonus(world.player.skills, world.player.origin?.race ?? 'solari') : null;
+  const mood = world.player.skills ? skillBonus(world.player.skills, world.player.origin?.race ?? 'kvissae') : null;
   const gain = Math.round(sold.credits * (mood?.tradeSell ?? 1));
   world.player.credits += gain;
   grantXp(world, gain / 160);
@@ -845,7 +882,7 @@ function repair(world: World): void {
   if (!world.player.dockedAt) return;
   const ship = world.player.ship;
   const fit = fitOf(world.player);
-  const repairMul = world.player.skills ? skillBonus(world.player.skills, world.player.origin?.race ?? 'solari').repair : 1;
+  const repairMul = world.player.skills ? skillBonus(world.player.skills, world.player.origin?.race ?? 'kvissae').repair : 1;
   const cost = Math.ceil(
     (Math.max(0, fit.maxShield - ship.shield) * 1.2 +
       Math.max(0, fit.maxArmor - ship.armor) * 2.5 +
@@ -945,7 +982,7 @@ function acceptMission(world: World, id: string): void {
   if (!origin || !dest) return;
   const path = findPath(world, origin.systemId, dest.systemId) ?? [origin.systemId];
   const escort = spawnPilot(world, {
-    faction: origin.owner === 'free' ? 'solari' : origin.owner,
+    faction: origin.owner === 'free' ? 'kvissae' : origin.owner,
     role: 'trader',
     systemId: origin.systemId,
     tier: 1,
@@ -1011,12 +1048,12 @@ function updateEvents(world: World): void {
       spawnPilot(world, { faction: 'pirate', role: 'pirate', systemId: sys.id, tier: 1, x: 300 + i * 200, y: 800, homeSystemId: sys.id });
     }
   }
-  if (kind === 'incursion' && world.settings?.invaders !== 'sleeping' && sys.owner !== 'absolute' && sys.security < (world.settings?.invaders === 'tide' ? 0.82 : 0.62)) {
-    sys.challenger = 'absolute';
+  if (kind === 'incursion' && world.settings?.invaders !== 'sleeping' && sys.owner !== 'omnir' && sys.security < (world.settings?.invaders === 'tide' ? 0.82 : 0.62)) {
+    sys.challenger = 'omnir';
     sys.warScore = Math.min(100, sys.warScore + 18);
     for (let i = 0; i < 2; i++) {
       spawnPilot(world, {
-        faction: 'absolute',
+        faction: 'omnir',
         role: 'invader',
         systemId: sys.id,
         tier: 2,
@@ -1040,7 +1077,7 @@ function eventText(kind: GameEvent['kind'], systemName: string, good: string): s
     case 'raid':
       return `Налёт Ржавых клинков на систему ${systemName}.`;
     case 'incursion':
-      return `Рой Абсолют вскрывает систему ${systemName}.`;
+      return `Омнир вскрывает систему ${systemName}.`;
     case 'crisis':
       return `Кризис поставок в системе ${systemName}.`;
     default:
@@ -1090,8 +1127,8 @@ function flipSystem(world: World, sys: StarSystem, next: FactionId): void {
   sys.owner = next;
   sys.warScore = 0;
   sys.challenger = prev === next ? null : prev;
-  if (next === 'absolute') sys.security = 0.05;
-  else if (prev === 'absolute') sys.security = 0.42;
+  if (next === 'omnir') sys.security = 0.05;
+  else if (prev === 'omnir') sys.security = 0.42;
   for (const id of sys.stationIds) {
     const st = stationById(world, id);
     if (st) st.owner = next;
@@ -1113,6 +1150,13 @@ function runCombat(world: World): void {
     if (!body.dockedAt) {
       body.ship.shield = Math.min(fit.maxShield, body.ship.shield + fit.shieldRegen * SIM_DT);
       body.ship.armor = Math.min(fit.maxArmor, body.ship.armor + fit.armorRegen * SIM_DT);
+      const people = body.id === 'player' ? world.player.origin?.race : body.faction;
+      if (people === 'taeyori') {
+        body.ship.shield = Math.min(fit.maxShield, body.ship.shield + fit.maxShield * 0.012 * SIM_DT);
+        body.ship.armor = Math.min(fit.maxArmor, body.ship.armor + fit.maxArmor * 0.005 * SIM_DT);
+        body.ship.hull = Math.min(fit.maxHull, body.ship.hull + fit.maxHull * 0.002 * SIM_DT);
+        body.ship.cap = Math.min(fit.maxCap, body.ship.cap + fit.maxCap * 0.004 * SIM_DT);
+      }
     }
   }
   advanceLock(world);
@@ -1222,7 +1266,14 @@ function shoot(world: World, attacker: Body, target: Body): void {
     }
     if (appl < 0.08) continue;
     const amount = weapon.dps * weapon.cycle * appl * (attacker.id === 'player' ? lead : 1);
-    applyDamage(target.ship, tFit, amount, weapon.type);
+    applyDamage(target.ship, tFit, amount, weapon.type, target.faction === 'omnir');
+    if (target.faction === 'zhargi' && target.id !== 'player') {
+      const hurt = world.pilots.find((p) => p.id === target.id);
+      if (hurt) {
+        hurt.ai.grudgeId = attacker.id;
+        hurt.ai.grudgeUntil = world.time + 240;
+      }
+    }
     attacker.combatTimer = Math.max(attacker.combatTimer, 10);
     target.combatTimer = Math.max(target.combatTimer, 10);
     if (attacker.id === 'player') {
@@ -1235,8 +1286,10 @@ function shoot(world: World, attacker: Body, target: Body): void {
       x: target.x,
       y: target.y,
       text: String(Math.max(1, Math.round(amount))),
-      color: DTYPE_COLOR[weapon.type],
+      color: FACTION_SHOT[attacker.faction] ?? DTYPE_COLOR[weapon.type],
       kind: 'hit',
+      fromX: attacker.x,
+      fromY: attacker.y,
     });
   }
 }
@@ -1248,7 +1301,7 @@ function blamePlayer(world: World, target: Body): void {
   pilot.lastHitBy = 'player';
   if (!pilot.hitByPlayer) {
     pilot.hitByPlayer = true;
-    if (pilot.faction !== 'pirate' && pilot.faction !== 'absolute') bumpRep(world, pilot.faction, -6);
+    if (pilot.faction !== 'pirate' && pilot.faction !== 'omnir') bumpRep(world, pilot.faction, -6);
     callForHelp(world, pilot, 'player');
   }
 }
@@ -1277,7 +1330,7 @@ function killPlayer(world: World): void {
   player.ship = freshShip('iskra', STARTER_FIT);
   const station =
     (player.lastStationId ? stationById(world, player.lastStationId) : undefined) ??
-    world.stations.find((s) => s.owner !== 'absolute') ??
+    world.stations.find((s) => s.owner !== 'omnir') ??
     world.stations[0];
   if (station) {
     player.dockedAt = station.id;
@@ -1337,7 +1390,7 @@ function killPilot(world: World, pilot: Pilot): void {
   pilot.ai.targetId = null;
   pilot.cargo = {};
   if (killer === 'player') {
-    const bountyMul = world.player.skills ? skillBonus(world.player.skills, world.player.origin?.race ?? 'solari').bounty : 1;
+    const bountyMul = world.player.skills ? skillBonus(world.player.skills, world.player.origin?.race ?? 'kvissae').bounty : 1;
     const bounty = Math.round((700 + pilot.tier * 1200 + Math.round((HULL_BY_ID[pilot.ship.hullId]?.price ?? 0) * 0.03)) * bountyMul);
     grantXp(world, 36 + pilot.tier * 14);
     world.player.credits += bounty;
@@ -1345,7 +1398,7 @@ function killPilot(world: World, pilot: Pilot): void {
     if (pilot.faction === 'pirate') {
       livingRep(world, 4);
       bumpRep(world, 'pirate', -8);
-    } else if (pilot.faction === 'absolute') livingRep(world, 6);
+    } else if (pilot.faction === 'omnir') livingRep(world, 6);
     else {
       bumpRep(world, pilot.faction, -14);
       livingRep(world, -3, pilot.faction);
@@ -1396,7 +1449,7 @@ function updateMissions(world: World): void {
 
 function completeMission(world: World, mission: Mission): void {
   mission.status = 'done';
-  const mood = world.player.skills ? skillBonus(world.player.skills, world.player.origin?.race ?? 'solari') : null;
+  const mood = world.player.skills ? skillBonus(world.player.skills, world.player.origin?.race ?? 'kvissae') : null;
   const reward = Math.round(mission.reward * (mood?.reward ?? 1));
   world.player.credits += reward;
   bumpRep(world, mission.repFaction, mission.repAmount);
@@ -1448,13 +1501,13 @@ function makeOffer(world: World, stationId: string, salt: number): Mission | nul
   const roll = unit(world.seed, world.tick, strHash(stationId), salt);
   const kind = roll < 0.48 ? 'deliver' : roll < 0.78 ? 'kill' : 'escort';
   const others = world.stations
-    .filter((s) => s.id !== station.id && s.owner !== 'absolute')
+    .filter((s) => s.id !== station.id && s.owner !== 'omnir')
     .map((s) => ({ s, path: findPath(world, station.systemId, s.systemId) }))
     .filter((x) => x.path && x.path.length >= 2 && x.path.length <= 4)
     .sort((a, b) => a.s.id.localeCompare(b.s.id));
   if (!others.length) return null;
   const dest = others[Math.floor(unit(world.seed, salt, 3) * others.length)]!;
-  const repFaction = station.owner === 'free' || station.owner === 'pirate' || station.owner === 'absolute' ? 'solari' : station.owner;
+  const repFaction = station.owner === 'free' || station.owner === 'pirate' || station.owner === 'omnir' ? 'kvissae' : station.owner;
   const id = `m${world.tick}-${salt}-${stationId}`;
   if (kind === 'deliver') {
     const goods = ['alloy', 'meds', 'cells', 'plates', 'fuel', 'food'];

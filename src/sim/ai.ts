@@ -77,23 +77,42 @@ function kit(role: Role, tier: number): string[] {
     : ['igla', 'luch', 'veil', 'poryv', 'klin', 'zapas', 'rosa'];
 }
 
-function personality(id: string): Pilot['personality'] {
+function personality(id: string, faction: FactionId): Pilot['personality'] {
   const h = strHash(id);
   const u = (shift: number) => ((h >>> shift) & 255) / 255;
-  return {
-    aggression: 0.18 + u(0) * 0.72,
-    greed: 0.18 + u(8) * 0.72,
-    caution: 0.15 + u(16) * 0.7,
-    loyalty: 0.18 + u(24) * 0.72,
-  };
+  let aggression = 0.18 + u(0) * 0.72;
+  let greed = 0.18 + u(8) * 0.72;
+  let caution = 0.15 + u(16) * 0.7;
+  const loyalty = 0.18 + u(24) * 0.72;
+  if (faction === 'zhargi') {
+    aggression = Math.min(1, aggression + 0.28);
+    caution = Math.max(0.05, caution - 0.14);
+  } else if (faction === 'taeyori') {
+    aggression = Math.max(0.04, aggression - 0.28);
+    caution = Math.min(1, caution + 0.26);
+  } else if (faction === 'kvissae') greed = Math.min(1, greed + 0.24);
+  else if (faction === 'omnir') {
+    aggression = 0.92;
+    caution = 0.08;
+  }
+  return { aggression, greed, caution, loyalty };
 }
 
+const NAMES: Partial<Record<FactionId, [string[], string[]]>> = {
+  human: [['Мира', 'Йон', 'Кайра', 'Орс', 'Лин', 'Эвар', 'Тара', 'Нор'], ['Кросс', 'Вейн', 'Яров', 'Дан', 'Кор', 'Шей']],
+  zhargi: [['Грах', 'Улк', 'Баз', 'Краг', 'Торн', 'Дур'], ['Камень', 'Жар', 'Горн', 'Шлак', 'Жила']],
+  kvissae: [['Сива', 'Лише', 'Аови', 'Саэл', 'Финн', 'Кира'], ['Перо', 'Ветер', 'Стая', 'Блеск', 'Клин']],
+  taeyori: [['Элар', 'Сион', 'Ваэл', 'Нури', 'Орн'], ['Хор', 'Память', 'Глубь', 'Свет']],
+  virex: [['Нор-4', 'Тиль', 'Векс', 'Кел', 'Авен'], ['Сборка', 'Порт', 'Кабель', 'Линза']],
+};
+
 function pilotName(id: string, faction: FactionId, role: Role): string {
-  if (faction === 'absolute' || role === 'invader') {
-    return `Абсолют-${(strHash(id) % 89) + 10}`;
+  if (faction === 'omnir' || role === 'invader') {
+    return `Омнир-${(strHash(id) % 89) + 10}`;
   }
-  const a = FIRST[strHash(id) % FIRST.length]!;
-  const b = LAST[strHash(id + ':') % LAST.length]!;
+  const pool = NAMES[faction] ?? [FIRST, LAST];
+  const a = pool[0][strHash(id) % pool[0].length]!;
+  const b = pool[1][strHash(id + ':') % pool[1].length]!;
   return role === 'pirate' ? `Ржавый ${a} ${b}` : `${a} ${b}`;
 }
 
@@ -112,7 +131,7 @@ export function spawnPilot(world: World, opts: SpawnOpts): Pilot {
     name: opts.name ?? pilotName(id, opts.faction, opts.role),
     faction: opts.faction,
     role: opts.role,
-    personality: personality(id),
+    personality: personality(id, opts.faction),
     credits: 5000 + tier * 6500,
     tier,
     systemId: opts.systemId,
@@ -149,6 +168,8 @@ export function spawnPilot(world: World, opts: SpawnOpts): Pilot {
       visited: [opts.systemId],
       escortMissionId: opts.escortMissionId ?? null,
       announced: false,
+      grudgeId: null,
+      grudgeUntil: 0,
     },
   };
   if (opts.role === 'trader') pilot.cargo.food = 6 + (strHash(id) % 8);
@@ -195,12 +216,12 @@ export function populate(world: World): void {
   const systems = [...world.systems].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   systems.forEach((sys, index) => {
     const station = world.stations.find((s) => s.systemId === sys.id);
-    if (sys.owner === 'absolute') {
+    if (sys.owner === 'omnir') {
       const n = sys.home ? 3 : 2;
       for (let i = 0; i < n; i++) {
         const ang = (i / n) * Math.PI * 2;
         spawnPilot(world, {
-          faction: 'absolute',
+          faction: 'omnir',
           role: 'invader',
           systemId: sys.id,
           tier: sys.home ? 3 : 2,
@@ -212,7 +233,7 @@ export function populate(world: World): void {
       }
       return;
     }
-    const faction = sys.owner === 'free' || sys.owner === 'pirate' ? 'solari' : sys.owner;
+    const faction = sys.owner === 'free' || sys.owner === 'pirate' ? 'kvissae' : sys.owner;
     if (station && sys.security >= 0.42 && (sys.home || unit(world.seed, index, 11) < 0.72)) {
       spawnPilot(world, {
         faction: station.owner === 'free' ? faction : station.owner,
@@ -261,13 +282,13 @@ export function populate(world: World): void {
       });
     }
   });
-  const homes = systems.filter((s) => s.home && s.home !== 'absolute');
+  const homes = systems.filter((s) => s.home && s.home !== 'omnir');
   for (let i = 0; i < 4; i++) {
     const sys = homes[i % Math.max(1, homes.length)] ?? systems[0];
     if (!sys) break;
     const station = world.stations.find((s) => s.systemId === sys.id);
     spawnPilot(world, {
-      faction: sys.owner === 'free' ? 'nimva' : sys.owner,
+      faction: sys.owner === 'free' ? 'taeyori' : sys.owner,
       role: 'explorer',
       systemId: sys.id,
       tier: 1,
@@ -286,10 +307,10 @@ export function reinforce(world: World): void {
     if (spawned >= 3 || living() >= 68) break;
     const here = world.pilots.filter((p) => !p.destroyed && p.systemId === sys.id);
     const station = world.stations.find((s) => s.systemId === sys.id);
-    if (sys.owner === 'absolute') {
+    if (sys.owner === 'omnir') {
       if (here.filter((p) => p.role === 'invader').length < 2 && unit(world.seed, world.tick, strHash(sys.id)) < 0.7) {
         spawnPilot(world, {
-          faction: 'absolute',
+          faction: 'omnir',
           role: 'invader',
           systemId: sys.id,
           tier: 2,
@@ -302,7 +323,7 @@ export function reinforce(world: World): void {
       }
       continue;
     }
-    const faction = sys.owner === 'free' || sys.owner === 'pirate' ? 'solari' : sys.owner;
+    const faction = sys.owner === 'free' || sys.owner === 'pirate' ? 'kvissae' : sys.owner;
     if ((sys.security > 0.58 || sys.home) && !here.some((p) => p.role === 'defender' && p.faction === faction)) {
       spawnPilot(world, {
         faction,
@@ -340,7 +361,7 @@ function threats(world: World, pilot: Pilot): Body[] {
   for (const o of pilotsInSystem(world, pilot.systemId)) {
     if (o.id === pilot.id || o.dockedAt) continue;
     if (o.ai.targetId === pilot.id) out.push(o);
-    else if (o.faction === 'absolute' && pilot.faction !== 'absolute') out.push(o);
+    else if (o.faction === 'omnir' && pilot.faction !== 'omnir') out.push(o);
     else if (o.role === 'pirate' && pilot.role !== 'pirate') out.push(o);
     else if (warBetween(world, o.faction, pilot.faction) && (o.role === 'defender' || o.role === 'hunter' || o.role === 'invader')) out.push(o);
   }
@@ -356,7 +377,7 @@ function pathRisk(world: World, path: string[], caution: number): number {
   for (const id of path) {
     const sys = systemById(world, id);
     if (!sys) return 0;
-    if (sys.owner === 'absolute') return caution > 0.28 ? 0 : 0.25;
+    if (sys.owner === 'omnir') return caution > 0.28 ? 0 : 0.25;
     if (sys.security < 0.22) risk *= caution > 0.5 ? 0 : 0.4;
     else if (sys.security < 0.4) risk *= caution > 0.78 ? 0.35 : 0.8;
   }
@@ -397,7 +418,7 @@ export function callForHelp(world: World, victim: Pilot, aggressorId: string): v
   for (const ally of pilotsInSystem(world, victim.systemId)) {
     if (ally.id === victim.id || ally.destroyed || ally.dockedAt) continue;
     const same = ally.faction === victim.faction;
-    const police = (sys?.security ?? 0) > 0.62 && victim.faction !== 'pirate' && victim.faction !== 'absolute' && (ally.role === 'defender' || ally.role === 'hunter');
+    const police = (sys?.security ?? 0) > 0.62 && victim.faction !== 'pirate' && victim.faction !== 'omnir' && (ally.role === 'defender' || ally.role === 'hunter');
     if (!same && !police) continue;
     if (ally.role === 'trader' || ally.role === 'explorer') {
       startFlee(world, ally);
@@ -418,7 +439,7 @@ function startFlee(world: World, pilot: Pilot): void {
   let bestSec = -1;
   for (const id of sys?.links ?? []) {
     const n = systemById(world, id);
-    if (!n || n.owner === 'absolute') continue;
+    if (!n || n.owner === 'omnir') continue;
     if (n.security > bestSec) {
       bestSec = n.security;
       best = n.id;
@@ -449,9 +470,13 @@ function risky(pilot: Pilot, prey: Body): boolean {
 }
 
 function choosePrey(world: World, pilot: Pilot): Body | null {
+  if (pilot.faction === 'zhargi' && pilot.ai.grudgeUntil > world.time && pilot.ai.grudgeId) {
+    const held = findBodySafe(world, pilot.ai.grudgeId);
+    if (held && held.systemId === pilot.systemId) return held;
+  }
   const local = pilotsInSystem(world, pilot.systemId).filter((p) => p.id !== pilot.id && !p.dockedAt);
   if (pilot.role === 'invader') {
-    const list = local.filter((p) => p.faction !== 'absolute');
+    const list = local.filter((p) => p.faction !== 'omnir');
     const player = world.player;
     const bodies: Body[] = [...list];
     if (!player.dockedAt && !player.jump && player.systemId === pilot.systemId) bodies.push(player);
@@ -460,7 +485,7 @@ function choosePrey(world: World, pilot: Pilot): Body | null {
   }
   if (pilot.role === 'defender' || pilot.role === 'hunter') {
     const player = world.player;
-    const bodies: Body[] = local.filter((p) => p.role === 'pirate' || p.faction === 'absolute' || (warBetween(world, pilot.faction, p.faction) && (p.role === 'defender' || p.role === 'hunter' || p.role === 'invader')));
+    const bodies: Body[] = local.filter((p) => p.role === 'pirate' || p.faction === 'omnir' || (warBetween(world, pilot.faction, p.faction) && (p.role === 'defender' || p.role === 'hunter' || p.role === 'invader')));
     if (!player.dockedAt && !player.jump && player.systemId === pilot.systemId) {
       const hostileRep = (player.reputation[pilot.faction] ?? 0) < -20;
       const shootingUs = player.locked.includes(pilot.id) && player.combatTimer > 0;
@@ -496,7 +521,7 @@ function choosePrey(world: World, pilot: Pilot): Body | null {
       }
     };
     for (const p of local) {
-      if (p.role === 'pirate' || p.faction === 'absolute') continue;
+      if (p.role === 'pirate' || p.faction === 'omnir') continue;
       if (p.role !== 'trader' && p.role !== 'explorer' && p.ship.hullId !== 'korob' && pilot.personality.aggression < 0.62) continue;
       consider(p, roughCargoValue(p.cargo), HULL_BY_ID[p.ship.hullId]?.price ?? 8000);
     }
@@ -540,7 +565,7 @@ function thinkTrader(world: World, pilot: Pilot): void {
   if (pilot.ai.timer > 0) return;
   let best: { score: number; qty: number; good: string; destId: string; destSys: string; path: string[] } | null = null;
   for (const dest of world.stations) {
-    if (dest.id === here.id || dest.owner === 'absolute') continue;
+    if (dest.id === here.id || dest.owner === 'omnir') continue;
     const path = findPath(world, here.systemId, dest.systemId);
     if (!path || path.length > 5) continue;
     const risk = pathRisk(world, path, pilot.personality.caution);
@@ -590,7 +615,7 @@ function thinkExplorer(world: World, pilot: Pilot): void {
   let dest = pilot.ai.homeSystemId;
   let best = -1;
   for (const sys of world.systems) {
-    if (sys.owner === 'absolute') continue;
+    if (sys.owner === 'omnir') continue;
     const seen = pilot.ai.visited.filter((id) => id === sys.id).length;
     const score = (pilot.ai.visited.includes(sys.id) ? 0 : 3) - seen + sys.security;
     if (score > best) {
@@ -602,7 +627,7 @@ function thinkExplorer(world: World, pilot: Pilot): void {
   pilot.ai.destSystemId = dest;
   pilot.ai.route = path;
   pilot.ai.routeIndex = Math.max(0, path.indexOf(pilot.systemId));
-  const st = world.stations.find((s) => s.systemId === dest && s.owner !== 'absolute');
+  const st = world.stations.find((s) => s.systemId === dest && s.owner !== 'omnir');
   pilot.ai.stationId = st?.id ?? null;
   pilot.ai.state = 'explore';
   if (pilot.dockedAt) undock(world, pilot);
@@ -644,7 +669,7 @@ function thinkFighter(world: World, pilot: Pilot): void {
     const neigh = [...(sys?.links ?? [])].sort();
     const low = neigh
       .map((id) => systemById(world, id))
-      .filter((s): s is NonNullable<typeof s> => !!s && s.owner !== 'absolute')
+      .filter((s): s is NonNullable<typeof s> => !!s && s.owner !== 'omnir')
       .sort((a, b) => a.security - b.security || (a.id < b.id ? -1 : 1))[0];
     if (low && (sys?.security ?? 1) > 0.35) {
       pilot.ai.destSystemId = low.id;
@@ -657,13 +682,13 @@ function thinkFighter(world: World, pilot: Pilot): void {
   }
   if (pilot.role === 'invader') {
     const sys = systemById(world, pilot.systemId);
-    if (sys?.owner !== 'absolute') {
+    if (sys?.owner !== 'omnir') {
       pilot.ai.state = 'invade';
       return;
     }
     const neigh = [...(sys?.links ?? [])]
       .map((id) => systemById(world, id))
-      .filter((s): s is NonNullable<typeof s> => !!s && s.owner !== 'absolute')
+      .filter((s): s is NonNullable<typeof s> => !!s && s.owner !== 'omnir')
       .sort((a, b) => a.security - b.security || (a.id < b.id ? -1 : 1))[0];
     if (neigh) {
       pilot.ai.destSystemId = neigh.id;

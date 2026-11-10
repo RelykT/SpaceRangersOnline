@@ -28,7 +28,7 @@ describe('генерация', () => {
     expect(sig(a)).not.toEqual(sig(c));
   });
 
-  it('карта связана и в ней есть четыре народа и Абсолют', () => {
+  it('карта связана и в ней есть пять народов и Омнир', () => {
     const w = createWorld(11, 'Тест');
     expect(w.systems.length).toBeGreaterThanOrEqual(28);
     const seen = new Set<string>([w.systems[0]!.id]);
@@ -43,7 +43,7 @@ describe('генерация', () => {
     }
     expect(seen.size).toBe(w.systems.length);
     for (const f of LIVING_FACTIONS) expect(w.systems.some((s) => s.owner === f)).toBe(true);
-    expect(w.systems.some((s) => s.owner === 'absolute')).toBe(true);
+    expect(w.systems.some((s) => s.owner === 'omnir')).toBe(true);
     expect(HULLS.length).toBeGreaterThanOrEqual(5);
     expect(MODULES.length).toBeGreaterThanOrEqual(25);
     expect(GOODS.length).toBeGreaterThanOrEqual(12);

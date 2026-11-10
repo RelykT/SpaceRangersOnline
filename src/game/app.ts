@@ -12,11 +12,12 @@ import {
   type PickHit,
   type Rect,
 } from '../input/pick';
-import { drawMap, drawMenu, drawSystem, pilotSamples } from '../render/draw';
+import { drawHangar, drawMap, drawMenu, drawSplash, drawSystem, pilotSamples } from '../render/draw';
 import {
   DTYPE_NAME,
   FACTION_NAME,
   FACTION_SHORT,
+  hailVoice,
   GOODS,
   HULLS,
   MODULES,
@@ -27,8 +28,9 @@ import {
 import { stationPrice } from '../sim/economy';
 import { cargoUsed, computeFit, hullOf } from '../sim/fitting';
 import { economyVolatility, skillBonus } from '../sim/origin';
-import { mainMenuHtml, loadHtml, settingsHtml, wizardHtml, pilotHtml, type Draft } from './menus';
-import { drawPortrait } from '../render/portrait';
+import { loreHtml, mainMenuHtml, loadHtml, settingsHtml, wizardHtml, pilotHtml, type Draft } from './menus';
+import { drawCareerBadge, drawEmblem, drawGoodIcon, drawModuleIcon, drawPortrait } from '../render/portrait';
+import { getQuality, qualityName, setQuality } from '../render/quality';
 import type { CareerId, Difficulty, EconomyMood, GalaxySize, InvaderMood, PlayableRace, Player } from '../sim/types';
 import { createWorld as makeWorld } from '../sim/world';
 import { dist, findPath, stationById, stationTech, systemById } from '../sim/query';
@@ -53,11 +55,14 @@ interface PointerTrack {
   moved: number;
 }
 
+let hailLine = '';
+
 const ORDERS: { id: string; label: string }[] = [
   { id: 'approach', label: 'Приблизиться' },
   { id: 'orbit', label: 'Орбита' },
   { id: 'keep', label: 'Держать дистанцию' },
   { id: 'lock', label: 'Захват цели' },
+  { id: 'hail', label: 'Связь' },
   { id: 'dock', label: 'Пристыковаться' },
   { id: 'jump', label: 'Прыжок' },
 ];
@@ -98,7 +103,8 @@ export function startGame(root: HTMLElement): void {
     <section id="menu" class="sheet menu blocker"></section>
     <section id="pause" class="sheet blocker" hidden></section>
     <section id="help" class="sheet blocker" hidden></section>
-    <section id="pilot" class="sheet blocker" hidden></section>`;
+    <section id="pilot" class="sheet blocker" hidden></section>
+    <button id="splash-skip" class="splash-skip" type="button" data-act="skip-splash">Пропустить</button>`;
 
   const canvas = root.querySelector<HTMLCanvasElement>('#view')!;
   const ctx = canvas.getContext('2d')!;
@@ -117,11 +123,12 @@ export function startGame(root: HTMLElement): void {
   const audio: AudioBus = createAudio();
 
   let world: World | null = null;
-  let mode: 'menu' | 'space' | 'map' = 'menu';
-  let menuView: 'main' | 'race' | 'career' | 'face' | 'galaxy' | 'tale' | 'settings' | 'load' = 'main';
+  let mode: 'splash' | 'menu' | 'space' | 'map' = 'splash';
+  let splashAt = 0;
+  let menuView: 'main' | 'race' | 'career' | 'face' | 'galaxy' | 'tale' | 'settings' | 'load' | 'lore' = 'main';
   let pilotOpen = false;
   const draft: Draft = {
-    race: 'solari',
+    race: 'kvissae',
     career: 'trader',
     name: 'Илль Сед',
     portrait: 11,
@@ -179,7 +186,7 @@ export function startGame(root: HTMLElement): void {
   }
 
   function resize(): void {
-    const dpr = Math.min(window.devicePixelRatio || 1, 1.75);
+    const dpr = Math.min(window.devicePixelRatio || 1, getQuality().dpr);
     viewW = Math.max(1, canvas.clientWidth);
     viewH = Math.max(1, canvas.clientHeight);
     canvas.width = Math.floor(viewW * dpr);
@@ -366,6 +373,7 @@ export function startGame(root: HTMLElement): void {
     if (!selected || mode !== 'space') return false;
     if (id === 'approach' || id === 'orbit' || id === 'keep') return true;
     if (id === 'lock') return selected.kind === 'ship';
+    if (id === 'hail') return selected.kind === 'ship' || selected.kind === 'station';
     if (id === 'dock') return selected.kind === 'station' || selected.kind === 'planet';
     if (id === 'jump') return selected.kind === 'gate';
     return false;
@@ -411,6 +419,10 @@ export function startGame(root: HTMLElement): void {
     if (id === 'approach') queue({ t: 'dest', x: point.x, y: point.y, mode: 'approach', range: selected.kind === 'ship' ? 180 : 90, followId });
     if (id === 'orbit') queue({ t: 'dest', x: point.x, y: point.y, mode: 'orbit', range: clamp(optimal * 0.9, 200, 1600), followId });
     if (id === 'keep') queue({ t: 'dest', x: point.x, y: point.y, mode: 'keep', range: clamp(optimal * 1.25, 280, 2000), followId });
+    if (id === 'hail') {
+      hailLine = hailOf(world, selected);
+      return;
+    }
     if (id === 'lock' && selected.kind === 'ship') {
       queue({ t: 'select', id: selected.id });
       queue({ t: 'lock' });
@@ -472,8 +484,27 @@ export function startGame(root: HTMLElement): void {
   function renderMenu(): void {
     if (menuView === 'main') menuEl.innerHTML = mainMenuHtml(!!world);
     else if (menuView === 'load') menuEl.innerHTML = loadHtml(world);
-    else if (menuView === 'settings') menuEl.innerHTML = settingsHtml(audio.enabled);
+    else if (menuView === 'settings') menuEl.innerHTML = settingsHtml(audio.enabled, qualityName());
+    else if (menuView === 'lore') menuEl.innerHTML = loreHtml();
     else menuEl.innerHTML = wizardHtml(menuView, draft);
+    paintBadges(menuEl);
+  }
+
+  function paintBadges(host: ParentNode): void {
+    host.querySelectorAll<HTMLCanvasElement>('canvas.emblem').forEach((canvas) => {
+      const race = canvas.dataset.race;
+      if (race === 'human' || race === 'kvissae' || race === 'zhargi' || race === 'taeyori' || race === 'virex') drawEmblem(canvas, race);
+    });
+    host.querySelectorAll<HTMLCanvasElement>('canvas.badge').forEach((canvas) => {
+      const career = canvas.dataset.career;
+      if (career === 'trader' || career === 'soldier' || career === 'hunter' || career === 'explorer' || career === 'pirate') drawCareerBadge(canvas, career);
+    });
+    host.querySelectorAll<HTMLCanvasElement>('canvas.gicon').forEach((canvas) => {
+      if (canvas.dataset.good) drawGoodIcon(canvas, canvas.dataset.good);
+    });
+    host.querySelectorAll<HTMLCanvasElement>('canvas.micon').forEach((canvas) => {
+      if (canvas.dataset.slot) drawModuleIcon(canvas, canvas.dataset.slot);
+    });
   }
 
   function beginFromDraft(): void {
@@ -564,8 +595,19 @@ export function startGame(root: HTMLElement): void {
       renderMenu();
       return;
     }
-    if (act === 'roll-face') {
-      draft.portrait = Math.floor(Math.random() * 9000) + 1;
+    if (act === 'roll-face' || act === 'face-next' || act === 'face-prev') {
+      if (act === 'face-prev') draft.portrait = Math.max(1, draft.portrait - 1);
+      else if (act === 'face-next') draft.portrait += 1;
+      else draft.portrait = Math.floor(Math.random() * 9000) + 1;
+      const cap = menuEl.querySelector('h2 + p.sub');
+      if (cap) cap.textContent = `Шаг 3 из 4. Лицо, глаза и одежда собираются слоями. Вариант ${draft.portrait}.`;
+      return;
+    }
+    if (act === 'quality') {
+      const q = el.dataset.q;
+      if (q === 'low' || q === 'medium' || q === 'high' || q === 'auto') setQuality(q);
+      renderMenu();
+      resize();
       return;
     }
     if (act === 'wiz-next') {
@@ -598,12 +640,22 @@ export function startGame(root: HTMLElement): void {
       renderMenu();
       return;
     }
+    if (act === 'skip-splash') {
+      mode = 'menu';
+      audio.ambient();
+      return;
+    }
     if (act === 'launch') {
       beginFromDraft();
       return;
     }
     if (act === 'load') {
       menuView = 'load';
+      renderMenu();
+      return;
+    }
+    if (act === 'lore') {
+      menuView = 'lore';
       renderMenu();
       return;
     }
@@ -800,6 +852,11 @@ export function startGame(root: HTMLElement): void {
   canvas.addEventListener('contextmenu', (event) => event.preventDefault());
   canvas.addEventListener('touchmove', (event) => event.preventDefault(), { passive: false });
   canvas.addEventListener('pointerdown', (event) => {
+    if (mode === 'splash') {
+      mode = 'menu';
+      audio.ambient();
+      return;
+    }
     if (event.target !== canvas) return;
     const p = canvasPoint(event);
     const canvasRect = { x: 0, y: 0, w: viewW, h: viewH };
@@ -1043,6 +1100,7 @@ export function startGame(root: HTMLElement): void {
       const keep = stationEl.scrollTop;
       stationEl.innerHTML = stationHtml(world, st.id, stationTab, fitSlot);
       stationEl.scrollTop = keep;
+      paintBadges(stationEl);
     }
     const sys = systemById(world, st.systemId);
     for (const good of GOODS) {
@@ -1054,9 +1112,11 @@ export function startGame(root: HTMLElement): void {
   }
 
   function paintMenus(): void {
-    const playing = mode !== 'menu';
-    menuEl.hidden = playing;
+    const playing = mode === 'space' || mode === 'map';
+    menuEl.hidden = mode !== 'menu';
     hud.hidden = !playing;
+    const skip = root.querySelector<HTMLElement>('#splash-skip');
+    if (skip) skip.hidden = mode !== 'splash';
     pauseEl.hidden = !pauseOpen;
     helpEl.hidden = !helpOpen;
     pilotEl.hidden = !pilotOpen || mode === 'menu';
@@ -1105,12 +1165,26 @@ export function startGame(root: HTMLElement): void {
       spaceCam.y += (at.y - spaceCam.y) * k;
     }
     const cam = activeCam();
-    if (!world || mode === 'menu') drawMenu(ctx, viewW, viewH, now);
+    if (mode === 'splash') {
+      if (!splashAt) splashAt = now;
+      drawSplash(ctx, viewW, viewH, now - splashAt);
+      if (now - splashAt > 5.6) {
+        mode = 'menu';
+        audio.ambient();
+      }
+    } else if (!world || mode === 'menu') drawMenu(ctx, viewW, viewH, now);
     else if (mode === 'map') drawMap(ctx, world, cam, mapId ?? world.player.systemId, now);
     else drawSystem(ctx, world, cam, selected ? (selected.kind === 'gate' ? `gate:${selected.to}` : selected.id) : null, pilotSamples(world, sample), now);
     paintMenus();
     const portraitHost = pilotOpen && mode !== 'menu' ? pilotEl : menuEl;
     const portrait = portraitHost.querySelector<HTMLCanvasElement>('#portrait');
+    const hangar = stationEl.querySelector<HTMLCanvasElement>('#hangar');
+    if (hangar && world?.player.dockedAt && mode === 'space') {
+      const dockId = world.player.dockedAt;
+      const owner = world.stations.find((s) => s.id === dockId)?.owner ?? 'free';
+      const hctx = hangar.getContext('2d');
+      if (hctx) drawHangar(hctx, hangar.width, hangar.height, owner, now);
+    }
     if (portrait) {
       const race = pilotOpen && world?.player.origin ? world.player.origin.race : draft.race;
       const face = pilotOpen && world?.player.origin ? world.player.origin.portrait : draft.portrait;
@@ -1186,8 +1260,8 @@ function readoutHtml(world: World): string {
   const speed = Math.round(Math.hypot(player.vx, player.vy));
   const mission = world.missions.find((m) => m.status === 'active');
   const lock = player.lock ? `Захват ${Math.round((player.lock.t / player.lock.need) * 100)}%` : player.locked.length ? `Целей: ${player.locked.length}` : 'Нет захвата';
-  const lines = world.logs.slice(-3).map((l) => esc(l.text)).join('<br>');
-  return `<div>${speed} км/с · ${lock}${player.combatTimer > 0 ? ' · в бою' : ''}${player.route ? ' · маршрут' : ''}</div><div class="log">${mission ? esc(mission.title) : 'Нет активного контракта'}</div><div class="log">${lines}</div><div class="log">Урон ${Math.round(fit.dps)} · ${fit.weapons.map((w) => DTYPE_NAME[w.type]).filter((v, i, a) => a.indexOf(v) === i).join(', ') || 'без орудий'}</div>`;
+  const lines = world.logs.slice(-2).map((l) => esc(l.text.length > 88 ? `${l.text.slice(0, 88)}…` : l.text)).join('<br>');
+  return `<div>${speed} км/с · ${lock}${player.combatTimer > 0 ? ' · в бою' : ''}${player.route ? ' · маршрут' : ''}</div><div class="log">${hailLine ? esc(hailLine) : mission ? esc(mission.title) : 'Нет активного контракта'}</div><div class="log">${lines}</div><div class="log">Урон ${Math.round(fit.dps)} · ${fit.weapons.map((w) => DTYPE_NAME[w.type]).filter((v, i, a) => a.indexOf(v) === i).join(', ') || 'без орудий'}</div>`;
 }
 
 function routeHops(world: World, to: string): string {
@@ -1207,7 +1281,7 @@ function stationHtml(world: World, stationId: string, tab: string, fitSlot: numb
   ].map(([id, label]) => `<button type="button" data-act="tab" data-tab="${id}" class="${tab === id ? 'on' : ''}">${label}</button>`).join('');
   let body = '';
   if (tab === 'market') {
-    body = GOODS.map((good) => `<div class="good"><div><b>${esc(good.name)}</b><div class="sub" data-price="${good.id}"></div></div><div class="btns"><button type="button" data-act="buy" data-good="${good.id}" data-qty="1">+1</button><button type="button" data-act="buy" data-good="${good.id}" data-qty="10">+10</button><button type="button" data-act="sell" data-good="${good.id}" data-qty="1">−1</button><button type="button" data-act="sell" data-good="${good.id}" data-qty="10">−10</button><button type="button" data-act="sell" data-good="${good.id}" data-qty="999">Слить</button></div></div>`).join('');
+    body = GOODS.map((good) => `<div class="good"><canvas class="gicon" data-good="${good.id}" width="32" height="32"></canvas><div><b>${esc(good.name)}</b><div class="sub" data-price="${good.id}"></div></div><div class="btns"><button type="button" data-act="buy" data-good="${good.id}" data-qty="1">+1</button><button type="button" data-act="buy" data-good="${good.id}" data-qty="10">+10</button><button type="button" data-act="sell" data-good="${good.id}" data-qty="1">−1</button><button type="button" data-act="sell" data-good="${good.id}" data-qty="10">−10</button><button type="button" data-act="sell" data-good="${good.id}" data-qty="999">Слить</button></div></div>`).join('');
   } else if (tab === 'fit') {
     const hull = hullOf(world.player.ship.hullId);
     const layout = slotLayout(hull);
@@ -1215,7 +1289,7 @@ function stationHtml(world: World, stationId: string, tab: string, fitSlot: numb
     const slots = layout.map((slot, index) => {
       const id = world.player.ship.modules[index];
       const def = id ? MODULE_BY_ID[id] : undefined;
-      return `<div class="slot"><button type="button" data-act="slot" data-index="${index}">${slotLabel(slot, layout.slice(0, index).filter((s) => s === slot).length)}: ${esc(def?.name ?? 'пусто')}</button>${id ? `<button type="button" data-act="unfit" data-index="${index}">Снять</button>` : ''}</div>`;
+      return `<div class="slot"><canvas class="micon" data-slot="${slot}" width="32" height="32"></canvas><button type="button" data-act="slot" data-index="${index}">${slotLabel(slot, layout.slice(0, index).filter((s) => s === slot).length)}: ${esc(def?.name ?? 'пусто')}</button>${id ? `<button type="button" data-act="unfit" data-index="${index}">Снять</button>` : ''}</div>`;
     }).join('');
     const catalog = fitSlot == null ? '' : catalogHtml(world, st.owner, tech, layout[fitSlot]!, fitSlot);
     const hulls = HULLS.filter((h) => h.tech <= tech).map((h) => `<button type="button" data-act="hull" data-hull="${h.id}" ${h.id === hull.id ? 'disabled' : ''}>${esc(h.name)} · ${h.price.toLocaleString('ru-RU')}</button>`).join(' ');
@@ -1231,7 +1305,7 @@ function stationHtml(world: World, stationId: string, tab: string, fitSlot: numb
     const reps = (Object.keys(FACTION_SHORT) as (keyof typeof FACTION_SHORT)[]).map((id) => `${FACTION_SHORT[id]} ${Math.round(world.player.reputation[id])}`).join(' · ');
     body = `<p>Щит ${Math.round(world.player.ship.shield)} / ${Math.round(fit.maxShield)}</p><p>Броня ${Math.round(world.player.ship.armor)} / ${Math.round(fit.maxArmor)}</p><p>Корпус ${Math.round(world.player.ship.hull)} / ${Math.round(fit.maxHull)}</p><button type="button" class="primary" data-act="repair" ${cost <= 0 ? 'disabled' : ''}>Чинить за ${cost.toLocaleString('ru-RU')}</button><h3>Репутация</h3><p>${reps}</p><p class="sub">Побед: ${world.player.kills}. Склад модулей летит с кораблём.</p>`;
   }
-  return `<div class="tabs">${tabs}<button type="button" class="primary" data-act="undock">В космос</button></div><p class="sub">${esc(st.name)} · ${esc(FACTION_NAME[st.owner])}</p>${body}`;
+    return `<canvas id="hangar" width="720" height="160"></canvas><div class="tabs">${tabs}<button type="button" class="primary" data-act="undock">В космос</button></div><p class="sub">${esc(st.name)} · ${esc(FACTION_NAME[st.owner])}</p>${body}`;
 }
 
 function catalogHtml(world: World, owner: World['stations'][number]['owner'], tech: number, slot: string, index: number): string {
@@ -1242,12 +1316,23 @@ function catalogHtml(world: World, owner: World['stations'][number]['owner'], te
   return `<h3>Слот</h3><p class="sub">${mods[0] ? esc(mods[0].blurb) : ''}</p><div class="stack">${own}${shop}<button type="button" data-act="sell-mod" data-mod="${owned[0]?.[0] ?? ''}" ${owned.length ? '' : 'disabled'}>Продать один со склада</button></div><p class="sub">Скидка растёт с репутацией у ${esc(FACTION_SHORT[owner])}.</p>`;
 }
 
+function hailOf(world: World, sel: Sel): string {
+  if (sel.kind === 'station') {
+    const st = stationById(world, sel.id);
+    return st ? hailVoice(st.owner, 'defender', st.name, true) : 'Канал пуст.';
+  }
+  if (sel.kind !== 'ship') return 'Канал молчит.';
+  const pilot = world.pilots.find((p) => p.id === sel.id);
+  if (!pilot) return 'Нет ответа.';
+  return hailVoice(pilot.faction, pilot.role, pilot.name, false);
+}
+
 function playerFit(player: Player) {
-  return computeFit(player.ship, { bonus: player.skills ? skillBonus(player.skills, player.origin?.race ?? 'solari') : undefined });
+  return computeFit(player.ship, { bonus: player.skills ? skillBonus(player.skills, player.origin?.race ?? 'kvissae') : undefined });
 }
 
 function helpHtml(): string {
-  return `<div class="help-grid"><div><h3>Мышь и клавиатура</h3><ul><li>Пустой космос — лететь в точку. Объект — выбрать и открыть кольцо приказов.</li><li>Если под курсором несколько целей, появляется список. Игра не выбирает за вас.</li><li>Колесо — масштаб, перетаскивание — сдвинуть камеру. «Следить» возвращает её к кораблю.</li><li><kbd>F1</kbd>–<kbd>F8</kbd> верхние слоты, <kbd>1</kbd>–<kbd>8</kbd> средние и нижние.</li><li><kbd>Tab</kbd> следующая цель, <kbd>Пробел</kbd> стоп, <kbd>M</kbd> карта, <kbd>Esc</kbd> меню.</li></ul></div><div><h3>Палец</h3><ul><li>Касание пустоты — лететь, касание объекта — выбрать. Удержание открывает кольцо приказов.</li><li>Зона касания не меньше 44 пикселей, даже если корабль на экране крошечный.</li><li>Щипок меняет масштаб, два пальца двигают камеру. Один палец карту не тащит.</li><li>Справа список «Обзор»: любую цель можно выбрать оттуда, без точного тыка.</li><li>Кнопки модулей снизу крупные. Панели не пропускают нажатия в космос.</li></ul></div></div><h3>Петля</h3><p>Стыкуйтесь, торгуйте, собирайте корпус в верфи. Кнопка «Пилот» — навыки, освоение корпусов и орудий, звания рас. Карьера со старта не запирает другие ветки. Щит лучше держит кинетику и взрыв, броня — ЭМ и термал. Пауза только в меню и когда вкладка скрыта.</p><button type="button" class="primary" data-act="close-help">В полёт</button>`;
+  return `<div class="help-grid"><div><h3>Мышь и клавиатура</h3><ul><li>Пустой космос — лететь в точку. Объект — выбрать и открыть кольцо: приблизиться, орбита, дистанция, захват, связь, стыковка, прыжок.</li><li>Если под курсором несколько целей, появляется список. Игра не выбирает за вас.</li><li>Колесо — масштаб, перетаскивание — сдвинуть камеру. «Следить» возвращает её к кораблю.</li><li><kbd>F1</kbd>–<kbd>F8</kbd> верхние слоты, <kbd>1</kbd>–<kbd>8</kbd> средние и нижние.</li><li><kbd>Tab</kbd> следующая цель, <kbd>Пробел</kbd> стоп, <kbd>M</kbd> карта, <kbd>Esc</kbd> меню.</li></ul></div><div><h3>Палец</h3><ul><li>Касание пустоты — лететь, касание объекта — выбрать. Удержание открывает кольцо приказов.</li><li>Зона касания не меньше 44 пикселей, даже если корабль на экране крошечный.</li><li>Щипок меняет масштаб, два пальца двигают камеру. Один палец карту не тащит.</li><li>Справа список «Обзор»: любую цель можно выбрать оттуда, без точного тыка.</li><li>Кнопки модулей снизу крупные. Панели не пропускают нажатия в космос.</li></ul></div></div><h3>Петля</h3><p>Стыкуйтесь, торгуйте, собирайте корпус в верфи. Кнопка «Пилот» — навыки, освоение корпусов и орудий, звания рас. Карьера со старта не запирает другие ветки. Щит лучше держит кинетику и взрыв, броня — ЭМ и термал. Пауза только в меню и когда вкладка скрыта.</p><button type="button" class="primary" data-act="close-help">В полёт</button>`;
 }
 
 function clock(time: number): string {
