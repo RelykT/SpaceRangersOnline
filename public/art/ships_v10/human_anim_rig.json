@@ -1,0 +1,67 @@
+{
+ "human_fighter": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/human_fighter/human_fighter_glow_512.webp",
+   "color": [
+    255,
+    90,
+    80
+   ],
+   "alpha": "0.6+0.25*sin(2*pi*t)"
+  },
+  "parts": []
+ },
+ "human_frigate": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/human_frigate/human_frigate_glow_512.webp",
+   "color": [
+    255,
+    90,
+    80
+   ],
+   "alpha": "0.6+0.25*sin(2*pi*t)"
+  },
+  "parts": []
+ },
+ "human_trader": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/human_trader/human_trader_glow_512.webp",
+   "color": [
+    255,
+    90,
+    80
+   ],
+   "alpha": "0.6+0.25*sin(2*pi*t)"
+  },
+  "parts": []
+ },
+ "human_cruiser": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/human_cruiser/human_cruiser_glow_512.webp",
+   "color": [
+    255,
+    90,
+    80
+   ],
+   "alpha": "0.6+0.25*sin(2*pi*t)"
+  },
+  "parts": []
+ },
+ "human_carrier": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/human_carrier/human_carrier_glow_512.webp",
+   "color": [
+    255,
+    90,
+    80
+   ],
+   "alpha": "0.6+0.25*sin(2*pi*t)"
+  },
+  "parts": []
+ }
+}

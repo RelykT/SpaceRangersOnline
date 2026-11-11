@@ -1,0 +1,578 @@
+{
+ "vireks_fighter": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/vireks_fighter/vireks_fighter_glow_512.webp",
+   "color": [
+    90,
+    190,
+    255
+   ],
+   "alpha": "0.22+0.22*sin(2*pi*(2*t))"
+  },
+  "parts": [
+   {
+    "name": "wing_upper_R",
+    "kind": "sprite",
+    "file": "ships/vireks_fighter/parts/wing_upper_R.webp",
+    "file_192": "ships/vireks_fighter/parts_192/wing_upper_R.webp",
+    "size_px": [
+     212,
+     50
+    ],
+    "pivot_px": [
+     0.0,
+     27.5
+    ],
+    "pivot_norm": [
+     0.0,
+     0.5556
+    ],
+    "anchor_uv": [
+     0.55664,
+     0.29785
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": -2.2,
+     "cycles_per_loop": 8,
+     "phase_rad": 0.0
+    },
+    "carries_sockets": [
+     "s1"
+    ]
+   },
+   {
+    "name": "wing_upper_L",
+    "kind": "sprite",
+    "file": "ships/vireks_fighter/parts/wing_upper_L.webp",
+    "file_192": "ships/vireks_fighter/parts_192/wing_upper_L.webp",
+    "size_px": [
+     212,
+     50
+    ],
+    "pivot_px": [
+     212.0,
+     27.5
+    ],
+    "pivot_norm": [
+     0.9976,
+     0.5556
+    ],
+    "anchor_uv": [
+     0.44141,
+     0.29785
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": 2.2,
+     "cycles_per_loop": 8,
+     "phase_rad": 0.0
+    },
+    "carries_sockets": [
+     "s0"
+    ]
+   },
+   {
+    "name": "wing_lower_R",
+    "kind": "sprite",
+    "file": "ships/vireks_fighter/parts/wing_lower_R.webp",
+    "file_192": "ships/vireks_fighter/parts_192/wing_lower_R.webp",
+    "size_px": [
+     188,
+     106
+    ],
+    "pivot_px": [
+     -2.0,
+     6.5
+    ],
+    "pivot_norm": [
+     -0.0106,
+     0.0616
+    ],
+    "anchor_uv": [
+     0.55469,
+     0.35352
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": -2.2,
+     "cycles_per_loop": 8,
+     "phase_rad": 1.3
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "wing_lower_L",
+    "kind": "sprite",
+    "file": "ships/vireks_fighter/parts/wing_lower_L.webp",
+    "file_192": "ships/vireks_fighter/parts_192/wing_lower_L.webp",
+    "size_px": [
+     188,
+     106
+    ],
+    "pivot_px": [
+     190.0,
+     6.5
+    ],
+    "pivot_norm": [
+     1.008,
+     0.0613
+    ],
+    "anchor_uv": [
+     0.44336,
+     0.35352
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": 2.2,
+     "cycles_per_loop": 8,
+     "phase_rad": 1.3
+    },
+    "carries_sockets": []
+   }
+  ]
+ },
+ "vireks_trader": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/vireks_trader/vireks_trader_glow_512.webp",
+   "color": [
+    90,
+    190,
+    255
+   ],
+   "alpha": "0.22+0.22*sin(2*pi*(2*t))"
+  },
+  "parts": [
+   {
+    "name": "wingcase_R",
+    "kind": "sprite",
+    "file": "ships/vireks_trader/parts/wingcase_R.webp",
+    "file_192": "ships/vireks_trader/parts_192/wingcase_R.webp",
+    "size_px": [
+     122,
+     256
+    ],
+    "pivot_px": [
+     2.0,
+     7.5
+    ],
+    "pivot_norm": [
+     0.0163,
+     0.0293
+    ],
+    "anchor_uv": [
+     0.50781,
+     0.39062
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "open",
+     "amp_deg": 1.4,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": [
+     "s1",
+     "s3"
+    ]
+   },
+   {
+    "name": "wingcase_L",
+    "kind": "sprite",
+    "file": "ships/vireks_trader/parts/wingcase_L.webp",
+    "file_192": "ships/vireks_trader/parts_192/wingcase_L.webp",
+    "size_px": [
+     123,
+     256
+    ],
+    "pivot_px": [
+     120.5,
+     7.5
+    ],
+    "pivot_norm": [
+     0.9797,
+     0.0293
+    ],
+    "anchor_uv": [
+     0.48828,
+     0.39062
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "open",
+     "amp_deg": -1.4,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": [
+     "s0",
+     "s2"
+    ]
+   }
+  ]
+ },
+ "vireks_cruiser": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/vireks_cruiser/vireks_cruiser_glow_512.webp",
+   "color": [
+    90,
+    190,
+    255
+   ],
+   "alpha": "0.22+0.22*sin(2*pi*(2*t))"
+  },
+  "parts": [
+   {
+    "name": "wings_R",
+    "kind": "sprite",
+    "file": "ships/vireks_cruiser/parts/wings_R.webp",
+    "file_192": "ships/vireks_cruiser/parts_192/wings_R.webp",
+    "size_px": [
+     174,
+     147
+    ],
+    "pivot_px": [
+     0.0,
+     5.0
+    ],
+    "pivot_norm": [
+     0.0,
+     0.034
+    ],
+    "anchor_uv": [
+     0.59766,
+     0.49316
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": -2.0,
+     "cycles_per_loop": 8,
+     "phase_rad": 0
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "wings_L",
+    "kind": "sprite",
+    "file": "ships/vireks_cruiser/parts/wings_L.webp",
+    "file_192": "ships/vireks_cruiser/parts_192/wings_L.webp",
+    "size_px": [
+     174,
+     148
+    ],
+    "pivot_px": [
+     174.0,
+     5.0
+    ],
+    "pivot_norm": [
+     0.9971,
+     0.0339
+    ],
+    "anchor_uv": [
+     0.39746,
+     0.49316
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": 2.0,
+     "cycles_per_loop": 8,
+     "phase_rad": 0
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "mandible_R",
+    "kind": "sprite",
+    "file": "ships/vireks_cruiser/parts/mandible_R.webp",
+    "file_192": "ships/vireks_cruiser/parts_192/mandible_R.webp",
+    "size_px": [
+     36,
+     48
+    ],
+    "pivot_px": [
+     15.0,
+     43.5
+    ],
+    "pivot_norm": [
+     0.4225,
+     0.9158
+    ],
+    "anchor_uv": [
+     0.55664,
+     0.1123
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "open",
+     "amp_deg": 6,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "mandible_L",
+    "kind": "sprite",
+    "file": "ships/vireks_cruiser/parts/mandible_L.webp",
+    "file_192": "ships/vireks_cruiser/parts_192/mandible_L.webp",
+    "size_px": [
+     36,
+     47
+    ],
+    "pivot_px": [
+     20.5,
+     43.0
+    ],
+    "pivot_norm": [
+     0.5694,
+     0.9149
+    ],
+    "anchor_uv": [
+     0.43848,
+     0.1123
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "open",
+     "amp_deg": -6,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": []
+   }
+  ]
+ },
+ "vireks_frigate": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/vireks_frigate/vireks_frigate_glow_512.webp",
+   "color": [
+    90,
+    190,
+    255
+   ],
+   "alpha": "0.22+0.22*sin(2*pi*(2*t))"
+  },
+  "parts": [
+   {
+    "name": "claw_R",
+    "kind": "sprite",
+    "file": "ships/vireks_frigate/parts/claw_R.webp",
+    "file_192": "ships/vireks_frigate/parts_192/claw_R.webp",
+    "size_px": [
+     82,
+     138
+    ],
+    "pivot_px": [
+     45.0,
+     137.0
+    ],
+    "pivot_norm": [
+     0.5455,
+     0.9928
+    ],
+    "anchor_uv": [
+     0.625,
+     0.29297
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "open",
+     "amp_deg": 5,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "claw_L",
+    "kind": "sprite",
+    "file": "ships/vireks_frigate/parts/claw_L.webp",
+    "file_192": "ships/vireks_frigate/parts_192/claw_L.webp",
+    "size_px": [
+     82,
+     138
+    ],
+    "pivot_px": [
+     36.5,
+     137.0
+    ],
+    "pivot_norm": [
+     0.4451,
+     0.9892
+    ],
+    "anchor_uv": [
+     0.37109,
+     0.29297
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "open",
+     "amp_deg": -5,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": []
+   }
+  ]
+ },
+ "vireks_flagship": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/vireks_flagship/vireks_flagship_glow_512.webp",
+   "color": [
+    90,
+    190,
+    255
+   ],
+   "alpha": "0.22+0.22*sin(2*pi*(2*t))"
+  },
+  "parts": [
+   {
+    "name": "wings_R",
+    "kind": "sprite",
+    "file": "ships/vireks_flagship/parts/wings_R.webp",
+    "file_192": "ships/vireks_flagship/parts_192/wings_R.webp",
+    "size_px": [
+     144,
+     212
+    ],
+    "pivot_px": [
+     -1.0,
+     20.0
+    ],
+    "pivot_norm": [
+     -0.007,
+     0.0941
+    ],
+    "anchor_uv": [
+     0.63477,
+     0.4707
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": -1.8,
+     "cycles_per_loop": 8,
+     "phase_rad": 0
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "wings_L",
+    "kind": "sprite",
+    "file": "ships/vireks_flagship/parts/wings_L.webp",
+    "file_192": "ships/vireks_flagship/parts_192/wings_L.webp",
+    "size_px": [
+     144,
+     212
+    ],
+    "pivot_px": [
+     144.5,
+     20.0
+    ],
+    "pivot_norm": [
+     1.0035,
+     0.0941
+    ],
+    "anchor_uv": [
+     0.3623,
+     0.4707
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": 1.8,
+     "cycles_per_loop": 8,
+     "phase_rad": 0
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "crown_mandibles_R",
+    "kind": "sprite",
+    "file": "ships/vireks_flagship/parts/crown_mandibles_R.webp",
+    "file_192": "ships/vireks_flagship/parts_192/crown_mandibles_R.webp",
+    "size_px": [
+     48,
+     48
+    ],
+    "pivot_px": [
+     19.0,
+     48.0
+    ],
+    "pivot_norm": [
+     0.4,
+     0.9897
+    ],
+    "anchor_uv": [
+     0.57129,
+     0.13672
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "open",
+     "amp_deg": 5,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "crown_mandibles_L",
+    "kind": "sprite",
+    "file": "ships/vireks_flagship/parts/crown_mandibles_L.webp",
+    "file_192": "ships/vireks_flagship/parts_192/crown_mandibles_L.webp",
+    "size_px": [
+     48,
+     49
+    ],
+    "pivot_px": [
+     28.5,
+     48.5
+    ],
+    "pivot_norm": [
+     0.5938,
+     0.9898
+    ],
+    "anchor_uv": [
+     0.42578,
+     0.13672
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "open",
+     "amp_deg": -5,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": []
+   }
+  ]
+ }
+}
