@@ -223,6 +223,29 @@ h1 { font-family: var(--display); font-weight: 700; letter-spacing: 0.14em; marg
 .sub { color: var(--dim); margin-top: 6px; }
 .stack { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
 label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--dim); }
+.file-btn {
+  position: relative;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 3px 14px 3px 14px;
+  background: linear-gradient(180deg, rgba(36, 52, 78, 0.96), rgba(10, 16, 28, 0.96));
+  color: var(--text);
+  cursor: pointer;
+}
+.file-btn input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+}
+.file-name { color: var(--dim); font-size: 12px; }
 input {
   background: #10192a;
   border: 1px solid rgba(183, 212, 255, 0.2);

@@ -1,11 +1,11 @@
-import { FACTION_COLOR } from '../sim/content';
+import { FACTION_COLOR, MODULE_BY_ID } from '../sim/content';
 import { computeFit } from '../sim/fitting';
 import { Y_SQUASH, worldToScreen, type Camera } from '../input/pick';
 import { unit } from '../sim/rng';
 import type { FactionId, Pilot, World } from '../sim/types';
-import { cover, menuNebula, menuPlanet, planetImage, ready, ringImage, splashImage, stationImage, systemImage } from './art';
+import { cover, hullScale, menuNebula, menuPlanet, planetImage, ready, ringImage, splashImage, stationImage, systemImage } from './art';
 import { getQuality, type Quality } from './quality';
-import { drawCraft } from './ships';
+import { drawCraft, paintExhaust } from './ships';
 
 export interface ShipSample {
   id: string;
@@ -26,6 +26,8 @@ export interface ShipSample {
   jumping: boolean;
   systemId: string;
   combat: boolean;
+  thrust: number;
+  boost: boolean;
 }
 
 interface Particle {
@@ -41,7 +43,6 @@ interface Particle {
 }
 
 const particles: Particle[] = [];
-const trails = new Map<string, { x: number; y: number }[]>();
 let seenPing = -1;
 const nebulaCache = new Map<string, HTMLCanvasElement>();
 const starCache = new Map<string, HTMLCanvasElement>();
@@ -182,7 +183,10 @@ export function drawSplash(ctx: CanvasRenderingContext2D, w: number, h: number, 
     flash: false,
     lightX: -40,
     lightY: -30,
+    thrust: 0.85,
+    boost: false,
   });
+  paintExhaust(ctx);
   ctx.save();
   ctx.globalAlpha = Math.min(1, time * 0.8);
   ctx.fillStyle = '#e0b565';
@@ -251,8 +255,11 @@ export function drawMenu(ctx: CanvasRenderingContext2D, w: number, h: number, ti
       flash: false,
       lightX: -30,
       lightY: -20,
+      thrust: 0.9,
+      boost: hull === 'iskra',
     });
   };
+  paintExhaust(ctx);
   fly(40, 52, h * 0.26, 'iskra', 'human');
   fly(320, 36, h * 0.62, 'oplot', 'zhargi');
   fly(560, 46, h * 0.16, 'korob', 'kvissae');
@@ -273,7 +280,7 @@ export function drawHangar(ctx: CanvasRenderingContext2D, w: number, h: number, 
     heading: -Math.PI / 2 + Math.sin(time * 0.25) * 0.04,
     faction: owner === 'free' || owner === 'pirate' ? 'human' : owner,
     hullId,
-    size: Math.min(h * 0.7, w * 0.42),
+    size: Math.min(h * 0.9, w * 0.55) * (hullScale(hullId) / 3.4),
     time,
     combat: false,
     hullFrac: 1,
@@ -281,7 +288,10 @@ export function drawHangar(ctx: CanvasRenderingContext2D, w: number, h: number, 
     flash: false,
     lightX: 0,
     lightY: -1,
+    thrust: 0.15,
+    boost: false,
   });
+  paintExhaust(ctx);
 }
 
 export function drawSystem(
@@ -405,21 +415,8 @@ export function drawSystem(
     const ang = Math.atan2(ship.vy, ship.vx);
     const faction = ship.id === 'player' ? (world.player.origin?.race ?? 'human') : ship.faction;
     const color = ship.id === 'player' ? '#9fd4ff' : FACTION_COLOR[ship.faction];
-    const speed = Math.hypot(ship.vx, ship.vy);
-    if (speed > 30 && faction !== 'taeyori') {
-      const hist = trails.get(ship.id) ?? [];
-      hist.push({ x: p.x, y: p.y });
-      while (hist.length > qual.trails) hist.shift();
-      trails.set(ship.id, hist);
-      ctx.strokeStyle = FACTION_COLOR[faction] ?? '#9fd4ff';
-      ctx.globalAlpha = 0.45;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      hist.forEach((pt, i) => (i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y)));
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-    }
-    const size = (ship.id === 'player' ? 1.18 : 1) * (qual.name === 'low' ? 92 : qual.name === 'high' ? 150 : 124);
+    const base = qual.name === 'low' ? 64 : qual.name === 'high' ? 96 : 82;
+    const size = base * hullScale(ship.hullId) * (ship.id === 'player' ? 1.06 : 1);
     const star = worldToScreen(cam, 0, 0);
     drawCraft(ctx, {
       id: ship.id,
@@ -436,10 +433,13 @@ export function drawSystem(
       flash: ship.combat && ship.shield > 0,
       lightX: star.x - p.x,
       lightY: star.y - p.y,
+      thrust: ship.thrust,
+      boost: ship.boost,
     });
     bars(ctx, p.x, p.y - size * 0.45, ship);
     if (selectedId === ship.id) bracket(ctx, p.x, p.y, size * 0.45, color);
   }
+  paintExhaust(ctx);
   for (const ping of world.pings) {
     if (ping.time <= seenPing || ping.systemId !== sys.id) continue;
     const at = worldToScreen(cam, ping.x, ping.y);
@@ -658,7 +658,10 @@ export function drawMap(ctx: CanvasRenderingContext2D, world: World, cam: Camera
         flash: false,
         lightX: 0,
         lightY: -1,
+        thrust: 1,
+        boost: true,
       });
+      paintExhaust(ctx);
     }
   }
 }
@@ -704,12 +707,14 @@ export function pilotSamples(world: World, pos: (id: string, x: number, y: numbe
   const push = (id: string, name: string, faction: FactionId, hullId: string, systemId: string, x: number, y: number, vx: number, vy: number, ship: Pilot['ship'], docked: boolean, jumping: boolean, combat: boolean) => {
     const at = pos(id, x, y);
     const fit = computeFit(ship);
+    const boost = ship.modules.some((id, i) => !!id && ship.online[i] && !!MODULE_BY_ID[id]?.mwd);
+    const thrust = Math.min(1, Math.hypot(vx, vy) / Math.max(80, fit.speed));
     out.push({
       id, name, faction, hullId, systemId,
       x: at.x, y: at.y, vx, vy,
       shield: ship.shield, armor: ship.armor, hull: ship.hull,
       maxShield: Math.max(1, fit.maxShield), maxArmor: Math.max(1, fit.maxArmor), maxHull: Math.max(1, fit.maxHull),
-      docked, jumping, combat,
+      docked, jumping, combat, thrust, boost,
     });
   };
   const player = world.player;

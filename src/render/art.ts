@@ -60,10 +60,24 @@ export function shipFile(faction: string, hullId: string): string {
   return `${race}_${HULL_SLUG[hullId] ?? 'fighter'}`;
 }
 
+export function hullScale(hullId: string): number {
+  if (hullId === 'klinok') return 1.45;
+  if (hullId === 'korob') return 1.75;
+  if (hullId === 'oplot') return 2.5;
+  if (hullId === 'monolit') return 3.4;
+  return 1;
+}
+
 export function shipImage(faction: string, hullId: string): HTMLImageElement {
   const file = shipFile(faction, hullId);
   const low = getQuality().name === 'low';
-  return loadImage(low ? `ships/low/${file}.webp` : `ships/${file}.webp`);
+  return loadImage(low ? `ships/192/${file}.webp` : `ships/${file}.webp`);
+}
+
+export function glowImage(faction: string, hullId: string): HTMLImageElement {
+  const file = shipFile(faction, hullId);
+  const low = getQuality().name === 'low';
+  return loadImage(low ? `ships/192/${file}_glow.webp` : `ships/${file}_glow.webp`);
 }
 
 const FACES: Record<string, string[]> = {

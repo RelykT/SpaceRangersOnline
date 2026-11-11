@@ -29,12 +29,12 @@ export interface Draft {
 }
 
 export function mainMenuHtml(hasSave: boolean): string {
-  return `<div class="menu-card"><h1>КРОМКА</h1><p class="sub">Живая пустота. Каждое зерно — другая галактика. Карьера только толкает в начале: дальше решает, чем вы летаете и с кем торгуете.</p><div class="stack"><button type="button" class="primary" data-act="new">Новая игра</button><button type="button" data-act="continue" ${hasSave ? '' : 'disabled'}>Продолжить</button><button type="button" data-act="load">Загрузить</button><label>Импорт сохранения<input id="import-file" type="file" accept="application/json,.json"></label><button type="button" data-act="lore">Народы</button><button type="button" data-act="settings">Настройки</button><button type="button" data-act="help">Управление</button></div></div>`;
+  return `<div class="menu-card"><h1>КРОМКА</h1><p class="sub">Живая пустота. Каждое зерно — другая галактика. Карьера только толкает в начале: дальше решает, чем вы летаете и с кем торгуете.</p><div class="stack"><button type="button" class="primary" data-act="new">Новая игра</button><button type="button" data-act="continue" ${hasSave ? '' : 'disabled'}>Продолжить</button><button type="button" data-act="load">Загрузить</button><label class="file-btn">Импорт сохранения<input id="import-file" type="file" accept="application/json,.json"><span class="file-name">Файл не выбран</span></label><button type="button" data-act="lore">Народы</button><button type="button" data-act="settings">Настройки</button><button type="button" data-act="help">Управление</button></div></div>`;
 }
 
 export function loadHtml(world: World | null): string {
   if (!world) {
-    return `<div class="menu-card"><h2>Загрузить</h2><p class="sub">На этом устройстве пусто. Импортируйте файл с другого.</p><label>Импорт<input id="import-file" type="file" accept="application/json,.json"></label><button type="button" data-act="back-menu">Назад</button></div>`;
+    return `<div class="menu-card"><h2>Загрузить</h2><p class="sub">На этом устройстве пусто. Импортируйте файл с другого.</p><label class="file-btn">Импорт сохранения<input id="import-file" type="file" accept="application/json,.json"><span class="file-name">Файл не выбран</span></label><button type="button" data-act="back-menu">Назад</button></div>`;
   }
   const origin = world.player.origin;
   const career = origin ? CAREER_BY_ID[origin.career].name : 'капитан';

@@ -1,5 +1,5 @@
 import { FACTION_ENGINE } from '../sim/content';
-import { emissiveMask, ready, shipImage } from './art';
+import { glowImage, ready, shipFile, shipImage } from './art';
 import { getQuality } from './quality';
 
 /** Двойной удар и пауза. В бою период короче. */
@@ -43,6 +43,8 @@ export interface Craft {
   flash: boolean;
   lightX: number;
   lightY: number;
+  thrust: number;
+  boost: boolean;
 }
 
 let scratch: HTMLCanvasElement | null = null;
@@ -107,9 +109,9 @@ export function drawCraft(ctx: CanvasRenderingContext2D, craft: Craft): void {
   ctx.drawImage(scratch, craft.x - c, craft.y - c);
   ctx.translate(craft.x, craft.y);
   ctx.rotate(spin);
-  if (q.glow) paintEngines(ctx, craft, size);
-  paintEmissive(ctx, craft, img, size);
-  if (craft.faction === 'taeyori' && q.glow) paintRings(ctx, size, craft.time);
+  if (q.glow) paintGlow(ctx, craft, size);
+  if (q.glow) paintFlameCore(ctx, craft, size);
+  spawnExhaust(craft, spin, size);
   if (craft.flash && craft.shieldFrac > 0.05) {
     ctx.strokeStyle = 'rgba(150,220,255,.85)';
     ctx.lineWidth = 2;
@@ -121,33 +123,252 @@ export function drawCraft(ctx: CanvasRenderingContext2D, craft: Craft): void {
   ctx.restore();
 }
 
-function paintEngines(ctx: CanvasRenderingContext2D, craft: Craft, size: number): void {
-  if (craft.faction === 'taeyori') return;
-  const color = FACTION_ENGINE[craft.faction as keyof typeof FACTION_ENGINE] ?? '#9fd4ff';
-  const flicker = 0.75 + Math.sin(craft.time * 28 + craft.x) * 0.25;
+const GLOW_TINT: Record<string, string> = {
+  human: '#8ec8ff',
+  zhargi: '#ff7a32',
+  kvissae: '#5ee0c8',
+  taeyori: '#d7b6ff',
+  virex: '#49c8ff',
+  omnir: '#ff2a3c',
+  free: '#8ec8ff',
+  pirate: '#ff7a45',
+};
+
+const tinted = new Map<string, HTMLCanvasElement>();
+
+function tintGlow(mask: HTMLImageElement, color: string): HTMLCanvasElement | null {
+  if (!ready(mask)) return null;
+  const key = `${mask.src}|${color}`;
+  const hit = tinted.get(key);
+  if (hit) return hit;
+  const c = document.createElement('canvas');
+  c.width = mask.naturalWidth;
+  c.height = mask.naturalHeight;
+  const g = c.getContext('2d');
+  if (!g) return null;
+  g.drawImage(mask, 0, 0);
+  g.globalCompositeOperation = 'source-atop';
+  g.fillStyle = color;
+  g.fillRect(0, 0, c.width, c.height);
+  tinted.set(key, c);
+  return c;
+}
+
+function glowAmount(craft: Craft, low: boolean): number {
+  const t = craft.time;
+  if (craft.faction === 'human') {
+    const blink = !low && Math.sin(t * 1.15) > 0.985 ? 0.4 : 0;
+    return 0.62 + blink;
+  }
+  if (craft.faction === 'zhargi') return 0.38 + (0.5 + 0.5 * Math.sin(t * 0.85)) * 0.5;
+  if (craft.faction === 'kvissae') return 0.4 + (low ? 0.15 : 0.28) * Math.sin(t * 2.2);
+  if (craft.faction === 'taeyori') return 0.32 + (0.5 + 0.5 * Math.sin(t * 3.5)) * 0.45;
+  if (craft.faction === 'virex') return 0.42 + (low ? 0.12 : 0.2) * Math.sin(t * 5);
+  if (craft.faction === 'omnir') return 0.18 + heartPulse(t, craft.combat) * 0.9;
+  return 0.5;
+}
+
+function paintGlow(ctx: CanvasRenderingContext2D, craft: Craft, size: number): void {
+  const mask = glowImage(craft.faction, craft.hullId);
+  const tint = GLOW_TINT[craft.faction] ?? '#ffffff';
+  const painted = tintGlow(mask, craft.faction === 'kvissae' ? '#e6c36a' : tint);
+  const base = tintGlow(mask, tint);
+  if (!base) return;
+  const low = getQuality().name === 'low';
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
-  ctx.fillStyle = color;
-  ctx.globalAlpha = 0.85 * flicker;
-  const spots = craft.faction === 'human' ? [-0.16, 0.16] : [0];
-  for (const ox of spots) {
+  ctx.globalAlpha = glowAmount(craft, low);
+  ctx.drawImage(base, -size / 2, -size / 2, size, size);
+  if (!low && (craft.faction === 'kvissae' || craft.faction === 'virex') && painted) {
+    const travel = ((craft.time * (craft.faction === 'virex' ? 0.55 : 0.32)) % 1);
+    const y = -size / 2 + travel * size;
+    ctx.save();
     ctx.beginPath();
-    ctx.ellipse(size * ox, size * 0.4, size * 0.05, size * 0.11 * flicker, 0, 0, Math.PI * 2);
+    ctx.rect(-size / 2, y - size * 0.07, size, size * 0.14);
+    ctx.clip();
+    ctx.globalAlpha = 0.95;
+    ctx.drawImage(painted, -size / 2, -size / 2, size, size);
+    ctx.restore();
+  }
+  if (craft.faction === 'taeyori') paintRings(ctx, size, craft.time);
+  ctx.restore();
+}
+
+function paintFlameCore(ctx: CanvasRenderingContext2D, craft: Craft, size: number): void {
+  const thrust = Math.max(0, Math.min(1, craft.thrust));
+  if (thrust < 0.04 && !craft.boost) return;
+  const power = thrust * (craft.boost ? 2.3 : 1);
+  const color = craft.faction === 'omnir' ? '#ff2438' : (FACTION_ENGINE[craft.faction as keyof typeof FACTION_ENGINE] ?? '#9fd4ff');
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  if (craft.faction === 'taeyori') {
+    ctx.fillStyle = '#efe6ff';
+    ctx.globalAlpha = 0.35 + 0.2 * Math.sin(craft.time * 4);
+    ctx.beginPath();
+    ctx.arc(0, 0, size * 0.08, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    return;
+  }
+  for (const n of nozzles(shipFile(craft.faction, craft.hullId))) {
+    const nx = n.x * size;
+    const ny = n.y * size;
+    const len = size * (0.05 + power * 0.12);
+    const half = Math.max(1.5, size * 0.018);
+    ctx.fillStyle = '#ffffff';
+    ctx.globalAlpha = 0.9;
+    ctx.beginPath();
+    ctx.ellipse(nx, ny + len * 0.25, half, len * 0.28, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.75;
+    ctx.beginPath();
+    ctx.ellipse(nx, ny + len * 0.62, half * 1.6, len * 0.5, 0, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.restore();
 }
 
-function paintEmissive(ctx: CanvasRenderingContext2D, craft: Craft, img: HTMLImageElement, size: number): void {
-  const kind = craft.faction === 'omnir' ? 'vein' : craft.faction === 'taeyori' ? 'crystal' : craft.faction === 'zhargi' ? 'amethyst' : null;
-  if (!kind) return;
-  const mask = emissiveMask(img, kind);
-  if (!mask) return;
-  const pulse = kind === 'vein' ? heartPulse(craft.time, craft.combat) : 0.45 + Math.sin(craft.time * (kind === 'crystal' ? 3.2 : 2.1)) * 0.35;
+interface Puff {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  max: number;
+  r: number;
+  hot: string;
+  cool: string;
+}
+
+const puffs: Puff[] = [];
+let steppedAt = -1;
+
+function nozzles(file: string): { x: number; y: number }[] {
+  const table: Record<string, { x: number; y: number }[]> = {
+    human_fighter: [{ x: -0.3, y: 0.36 }, { x: 0.3, y: 0.36 }],
+    human_frigate: [{ x: -0.14, y: 0.38 }, { x: 0.14, y: 0.38 }],
+    human_trader: [{ x: 0, y: 0.44 }],
+    human_cruiser: [{ x: -0.16, y: 0.38 }, { x: 0.16, y: 0.38 }],
+    human_carrier: [{ x: -0.24, y: 0.36 }, { x: 0.24, y: 0.36 }],
+    zhargi_fighter: [{ x: 0, y: 0.42 }],
+    zhargi_frigate: [{ x: 0, y: 0.44 }],
+    zhargi_trader: [{ x: -0.22, y: 0.34 }, { x: 0.22, y: 0.34 }],
+    zhargi_battleship: [{ x: -0.1, y: 0.38 }, { x: 0.1, y: 0.38 }],
+    zhargi_gate: [{ x: -0.12, y: 0.36 }, { x: 0.12, y: 0.36 }],
+    kvissae_fighter: [{ x: -0.28, y: 0.3 }, { x: 0.28, y: 0.3 }],
+    kvissae_frigate: [{ x: -0.36, y: 0.32 }, { x: 0.36, y: 0.32 }],
+    kvissae_trader: [{ x: -0.1, y: 0.36 }, { x: 0.1, y: 0.36 }],
+    kvissae_cruiser: [{ x: -0.1, y: 0.36 }, { x: 0.1, y: 0.36 }],
+    kvissae_fan: [{ x: -0.16, y: 0.34 }, { x: 0.16, y: 0.34 }],
+    omnir_fighter: [{ x: 0, y: 0.4 }],
+    omnir_frigate: [{ x: -0.12, y: 0.36 }, { x: 0.12, y: 0.36 }],
+    omnir_trader: [{ x: -0.1, y: 0.38 }, { x: 0.1, y: 0.38 }],
+    omnir_battleship: [{ x: 0, y: 0.4 }],
+    omnir_hivemaw: [{ x: -0.22, y: 0.34 }, { x: 0.22, y: 0.34 }, { x: 0, y: 0.4 }],
+    vireks_fighter: [{ x: -0.12, y: 0.36 }, { x: 0.12, y: 0.36 }],
+    vireks_frigate: [{ x: -0.16, y: 0.36 }, { x: 0.16, y: 0.36 }],
+    vireks_trader: [{ x: -0.14, y: 0.36 }, { x: 0.14, y: 0.36 }],
+    vireks_cruiser: [{ x: -0.18, y: 0.34 }, { x: 0.18, y: 0.34 }],
+    vireks_mother: [{ x: -0.16, y: 0.34 }, { x: 0.16, y: 0.34 }],
+  };
+  return table[file] ?? [{ x: 0, y: 0.4 }];
+}
+
+function toWorld(x: number, y: number, spin: number, lx: number, ly: number): { x: number; y: number } {
+  const c = Math.cos(spin);
+  const s = Math.sin(spin);
+  return { x: x + lx * c - ly * s, y: y + lx * s + ly * c };
+}
+
+function spawnExhaust(craft: Craft, spin: number, size: number): void {
+  stepPuffs(craft.time);
+  const low = getQuality().name === 'low';
+  const file = shipFile(craft.faction, craft.hullId);
+  const thrust = Math.max(0, Math.min(1, craft.thrust));
+  const boosting = craft.boost && thrust > 0.2;
+  const color = craft.faction === 'omnir' ? '#ff2438' : (FACTION_ENGINE[craft.faction as keyof typeof FACTION_ENGINE] ?? '#9fd4ff');
+  const dirx = -Math.sin(spin);
+  const diry = Math.cos(spin);
+  const speed = (90 + thrust * 260) * (boosting ? 1.7 : 1);
+  const life = (0.12 + thrust * 0.2) * (boosting ? 1.45 : 1);
+  if (craft.faction === 'taeyori') {
+    if (low && Math.random() > 0.35) return;
+    const count = low ? 1 : 2;
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const rad = size * (0.15 + Math.random() * 0.25);
+      const at = toWorld(craft.x, craft.y, spin, Math.cos(a) * rad, Math.sin(a) * rad);
+      puffs.push({
+        x: at.x, y: at.y,
+        vx: Math.cos(a) * 18, vy: Math.sin(a) * 18,
+        life: 0.35, max: 0.35, r: 1.5 + Math.random() * 1.5,
+        hot: '#ffffff', cool: '#d7b6ff',
+      });
+    }
+    return;
+  }
+  if (thrust < 0.05 && Math.abs(headings.get(craft.id)?.bank ?? 0) < 0.1) return;
+  const ports = nozzles(file);
+  const per = low ? 1 : boosting ? 3 : 1;
+  if (thrust >= 0.05) {
+    for (const n of ports) {
+      for (let i = 0; i < per; i++) {
+        const at = toWorld(craft.x, craft.y, spin, n.x * size, n.y * size);
+        const spread = (Math.random() - 0.5) * 40;
+        puffs.push({
+          x: at.x, y: at.y,
+          vx: dirx * speed + -diry * spread,
+          vy: diry * speed + dirx * spread,
+          life, max: life,
+          r: (boosting ? 3.2 : 1.8) * (0.6 + Math.random()),
+          hot: '#ffffff',
+          cool: color,
+        });
+      }
+    }
+  }
+  const bank = headings.get(craft.id)?.bank ?? 0;
+  if (Math.abs(bank) > 0.12 && !low) {
+    const side = bank > 0 ? -1 : 1;
+    const at = toWorld(craft.x, craft.y, spin, side * size * 0.28, size * 0.02);
+    puffs.push({
+      x: at.x, y: at.y,
+      vx: -diry * side * 70, vy: dirx * side * 70,
+      life: 0.12, max: 0.12, r: 1.4,
+      hot: '#ffffff', cool: '#b7d4ff',
+    });
+  }
+}
+
+function stepPuffs(time: number): void {
+  if (time === steppedAt) return;
+  const dt = steppedAt < 0 ? 0.016 : Math.min(0.05, Math.max(0.001, time - steppedAt));
+  steppedAt = time;
+  for (const p of puffs) {
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vx *= 0.9;
+    p.vy *= 0.9;
+    p.life -= dt;
+  }
+  const cap = getQuality().name === 'low' ? 90 : 260;
+  while (puffs.length > cap) puffs.shift();
+  for (let i = puffs.length - 1; i >= 0; i--) if (puffs[i]!.life <= 0) puffs.splice(i, 1);
+}
+
+export function paintExhaust(ctx: CanvasRenderingContext2D): void {
+  if (!puffs.length) return;
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
-  ctx.globalAlpha = 0.25 + pulse * 0.75;
-  ctx.drawImage(mask, -size / 2, -size / 2, size, size);
+  for (const p of puffs) {
+    const k = Math.max(0, p.life / p.max);
+    ctx.globalAlpha = k * k;
+    ctx.fillStyle = k > 0.55 ? p.hot : p.cool;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r * (1.4 - k), 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.restore();
 }
 

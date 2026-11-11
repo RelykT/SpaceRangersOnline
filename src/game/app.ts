@@ -819,6 +819,8 @@ export function startGame(root: HTMLElement): void {
   root.querySelector('#menu')!.addEventListener('change', (event) => {
     const input = event.target as HTMLInputElement;
     if (input.id === 'import-file' && input.files?.[0]) {
+      const name = input.parentElement?.querySelector('.file-name');
+      if (name) name.textContent = input.files[0].name;
       void importGame(input.files[0]).then((loaded) => {
         world = loaded;
         mode = 'space';
