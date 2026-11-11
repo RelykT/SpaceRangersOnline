@@ -66,6 +66,45 @@ export function aimDegrees(x: number, y: number, aimX: number, aimY: number, spi
   return (Math.atan2(lx, -ly) * 180) / Math.PI;
 }
 
+let sheet: HTMLCanvasElement | null = null;
+let sheetCtx: CanvasRenderingContext2D | null = null;
+
+function shipSheet(px: number): CanvasRenderingContext2D | null {
+  const side = Math.max(32, Math.ceil(px));
+  if (!sheet) {
+    sheet = document.createElement('canvas');
+    sheetCtx = sheet.getContext('2d');
+  }
+  if (!sheet || !sheetCtx) return null;
+  if (sheet.width !== side || sheet.height !== side) {
+    sheet.width = side;
+    sheet.height = side;
+  }
+  sheetCtx.setTransform(1, 0, 0, 1, 0, 0);
+  sheetCtx.clearRect(0, 0, side, side);
+  return sheetCtx;
+}
+
+/** Star light stays inside the hull alpha, so the sprite square does not tint the sky. */
+function paintHullLight(g: CanvasRenderingContext2D, craft: Craft, size: number, spin: number): void {
+  const len = Math.hypot(craft.lightX, craft.lightY) || 1;
+  const sx = craft.lightX / len;
+  const sy = craft.lightY / len;
+  const c = Math.cos(spin);
+  const s = Math.sin(spin);
+  const lx = sx * c + sy * s;
+  const ly = -sx * s + sy * c;
+  const grad = g.createLinearGradient(-lx * size, -ly * size, lx * size, ly * size);
+  grad.addColorStop(0, 'rgba(255,255,255,.34)');
+  grad.addColorStop(0.48, 'rgba(255,255,255,0)');
+  grad.addColorStop(1, 'rgba(0,0,16,.42)');
+  g.save();
+  g.globalCompositeOperation = 'source-atop';
+  g.fillStyle = grad;
+  g.fillRect(-size * 2, -size * 2, size * 4, size * 4);
+  g.restore();
+}
+
 export function drawCraft(ctx: CanvasRenderingContext2D, craft: Craft): void {
   const size = craft.size;
   const bank = bankOf(craft.id, craft.heading);
@@ -80,35 +119,32 @@ export function drawCraft(ctx: CanvasRenderingContext2D, craft: Craft): void {
   ctx.ellipse(0, 0, size * 0.28, size * 0.36, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
+  const pad = size * 0.55;
+  const side = Math.ceil(size + pad * 2);
+  const g = shipSheet(side);
+  const aimDeg = craft.aimX == null || craft.aimY == null ? null : aimDegrees(craft.x, craft.y, craft.aimX, craft.aimY, spin);
+  let painted = false;
+  if (g && sheet) {
+    g.translate(side / 2, side / 2);
+    painted = paintShip(g, {
+      faction: craft.faction,
+      hullId: craft.hullId,
+      size,
+      time: craft.time,
+      combat: craft.combat,
+      weapons: craft.weapons,
+      aimDeg,
+    });
+    if (painted && q.glow) paintHullLight(g, craft, size, spin);
+  }
   ctx.save();
   ctx.translate(craft.x, craft.y);
   ctx.rotate(spin);
   paintFlameCore(ctx, craft, size);
-  const aimDeg = craft.aimX == null || craft.aimY == null ? null : aimDegrees(craft.x, craft.y, craft.aimX, craft.aimY, spin);
-  const painted = paintShip(ctx, {
-    faction: craft.faction,
-    hullId: craft.hullId,
-    size,
-    time: craft.time,
-    combat: craft.combat,
-    weapons: craft.weapons,
-    aimDeg,
-  });
-  if (!painted) {
+  if (painted && sheet) ctx.drawImage(sheet, -side / 2, -side / 2);
+  else if (!painted) {
     ctx.fillStyle = '#8fb4d8';
     ctx.fillRect(-size * 0.15, -size * 0.28, size * 0.3, size * 0.56);
-  } else if (q.glow && (craft.lightX !== 0 || craft.lightY !== 0)) {
-    const len = Math.hypot(craft.lightX, craft.lightY) || 1;
-    const lx = craft.lightX / len;
-    const ly = craft.lightY / len;
-    const grad = ctx.createLinearGradient(-lx * size, -ly * size, lx * size, ly * size);
-    grad.addColorStop(0, 'rgba(255,255,255,.18)');
-    grad.addColorStop(0.55, 'rgba(255,255,255,0)');
-    grad.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.fillStyle = grad;
-    ctx.fillRect(-size / 2, -size / 2, size, size);
-    ctx.globalCompositeOperation = 'source-over';
   }
   if (craft.ripple && craft.ripple > 0.02 && craft.shieldFrac > 0.05) {
     const local = (craft.rippleAng ?? 0) - spin;
