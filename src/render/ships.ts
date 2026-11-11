@@ -156,39 +156,60 @@ export function drawCraft(ctx: CanvasRenderingContext2D, craft: Craft): void {
   spawnExhaust(craft, spin, size);
 }
 
+function jetColor(faction: string): { core: string; plume: string } {
+  if (faction === 'omnir') return { core: '#ff4a55', plume: '#8c1424' };
+  if (faction === 'zhargi') return { core: '#ffb15a', plume: '#e25a18' };
+  if (faction === 'taeyori') return { core: '#ffffff', plume: '#d7b6ff' };
+  const plume = FACTION_ENGINE[faction as keyof typeof FACTION_ENGINE] ?? '#7ecbff';
+  return { core: '#f4fbff', plume };
+}
+
 function paintFlameCore(ctx: CanvasRenderingContext2D, craft: Craft, size: number): void {
   const thrust = Math.max(0, Math.min(1, craft.thrust));
   if (thrust < 0.04 && !craft.boost) return;
-  const power = thrust * (craft.boost ? 2.3 : 1);
-  const color = craft.faction === 'omnir' ? '#ff2438' : (FACTION_ENGINE[craft.faction as keyof typeof FACTION_ENGINE] ?? '#9fd4ff');
+  const power = thrust * (craft.boost ? 1.45 : 1);
+  const { core, plume } = jetColor(craft.faction);
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
-  if (craft.faction === 'taeyori') {
-    ctx.fillStyle = '#efe6ff';
-    ctx.globalAlpha = 0.45 + 0.25 * Math.sin(craft.time * 6);
-    for (const n of nozzleLocal(craft.faction, craft.hullId)) {
-      ctx.beginPath();
-      ctx.arc(n.x * size, n.y * size, Math.max(1.2, size * 0.012), 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.restore();
-    return;
-  }
   for (const n of nozzleLocal(craft.faction, craft.hullId)) {
     const nx = n.x * size;
-    const ny = n.y * size;
-    const len = size * (0.05 + power * 0.12);
-    const half = Math.max(1.5, size * 0.018);
-    ctx.fillStyle = '#ffffff';
-    ctx.globalAlpha = 0.9;
+    const mouth = n.y * size + size * 0.018;
+    if (craft.faction === 'taeyori') {
+      ctx.fillStyle = plume;
+      ctx.globalAlpha = 0.35 + 0.2 * Math.sin(craft.time * 7 + n.x * 12);
+      ctx.beginPath();
+      ctx.arc(nx, mouth, Math.max(0.8, size * 0.008), 0, Math.PI * 2);
+      ctx.fill();
+      continue;
+    }
+    const radius = Math.min(size * 0.045, Math.max(size * 0.02, n.r * size * 1.2));
+    const len = size * (0.03 + power * 0.08);
+    ctx.fillStyle = plume;
+    ctx.globalAlpha = 0.55;
     ctx.beginPath();
-    ctx.ellipse(nx, ny + len * 0.25, half, len * 0.28, 0, 0, Math.PI * 2);
+    ctx.moveTo(nx - radius * 0.45, mouth);
+    ctx.lineTo(nx + radius * 0.45, mouth);
+    ctx.lineTo(nx + radius * 0.2, mouth + len);
+    ctx.lineTo(nx - radius * 0.2, mouth + len);
+    ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = color;
-    ctx.globalAlpha = 0.75;
+    ctx.strokeStyle = core;
+    ctx.globalAlpha = 0.8;
+    ctx.lineWidth = Math.max(1, radius * 0.35);
     ctx.beginPath();
-    ctx.ellipse(nx, ny + len * 0.62, half * 1.6, len * 0.5, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.moveTo(nx, mouth);
+    ctx.lineTo(nx, mouth + len * 0.62);
+    ctx.stroke();
+    for (let i = 1; i <= 3; i++) {
+      const t = i / 4;
+      const y = mouth + len * (0.28 + t * 0.7);
+      const w = radius * (0.28 + 0.22 * Math.sin(craft.time * 22 + i + n.x * 8));
+      ctx.globalAlpha = 0.55 * (1 - t * 0.7);
+      ctx.fillStyle = i % 2 ? core : plume;
+      ctx.beginPath();
+      ctx.ellipse(nx, y, Math.max(0.6, w), Math.max(0.4, w * 0.42), 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
   ctx.restore();
 }
@@ -219,43 +240,40 @@ function spawnExhaust(craft: Craft, spin: number, size: number): void {
   const low = getQuality().name === 'low';
   const thrust = Math.max(0, Math.min(1, craft.thrust));
   const boosting = craft.boost && thrust > 0.2;
-  const color = craft.faction === 'omnir' ? '#ff2438' : (FACTION_ENGINE[craft.faction as keyof typeof FACTION_ENGINE] ?? '#9fd4ff');
+  const tone = jetColor(craft.faction);
   const dirx = -Math.sin(spin);
   const diry = Math.cos(spin);
-  const speed = (90 + thrust * 260) * (boosting ? 1.7 : 1);
-  const life = (0.12 + thrust * 0.2) * (boosting ? 1.45 : 1);
+  const speed = (40 + thrust * 120) * (boosting ? 1.35 : 1);
+  const life = (0.08 + thrust * 0.1) * (boosting ? 1.25 : 1);
   if (craft.faction === 'taeyori') {
-    if (low && Math.random() > 0.45) return;
+    if (low && Math.random() > 0.5) return;
     for (const n of nozzleLocal(craft.faction, craft.hullId)) {
-      const at = toWorld(craft.x, craft.y, spin, n.x * size, n.y * size);
+      const at = toWorld(craft.x, craft.y, spin, n.x * size, n.y * size + size * 0.02);
       const a = Math.random() * Math.PI * 2;
       puffs.push({
         x: at.x, y: at.y,
-        vx: Math.cos(a) * 22, vy: Math.sin(a) * 22,
-        life: 0.32, max: 0.32, r: 1.2 + Math.random(),
-        hot: '#ffffff', cool: '#d7b6ff',
+        vx: Math.cos(a) * 14, vy: Math.sin(a) * 14,
+        life: 0.22, max: 0.22, r: 0.7 + Math.random() * 0.5,
+        hot: tone.core, cool: tone.plume,
       });
     }
     return;
   }
   if (thrust < 0.05 && Math.abs(headings.get(craft.id)?.bank ?? 0) < 0.1) return;
   const ports = nozzleLocal(craft.faction, craft.hullId);
-  const per = low ? 1 : boosting ? 3 : 1;
-  if (thrust >= 0.05) {
+  if (thrust >= 0.05 && Math.random() < (low ? 0.45 : 0.8)) {
     for (const n of ports) {
-      for (let i = 0; i < per; i++) {
-        const at = toWorld(craft.x, craft.y, spin, n.x * size, n.y * size);
-        const spread = (Math.random() - 0.5) * 40;
-        puffs.push({
-          x: at.x, y: at.y,
-          vx: dirx * speed + -diry * spread,
-          vy: diry * speed + dirx * spread,
-          life, max: life,
-          r: (boosting ? 3.2 : 1.8) * (0.6 + Math.random()),
-          hot: '#ffffff',
-          cool: color,
-        });
-      }
+      const at = toWorld(craft.x, craft.y, spin, n.x * size, n.y * size + size * 0.04);
+      const spread = (Math.random() - 0.5) * 18;
+      puffs.push({
+        x: at.x, y: at.y,
+        vx: dirx * speed + -diry * spread,
+        vy: diry * speed + dirx * spread,
+        life, max: life,
+        r: (boosting ? 1.3 : 0.8) * (0.7 + Math.random() * 0.4),
+        hot: tone.core,
+        cool: tone.plume,
+      });
     }
   }
   const bank = headings.get(craft.id)?.bank ?? 0;

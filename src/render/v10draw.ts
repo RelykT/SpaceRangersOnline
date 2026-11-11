@@ -298,8 +298,8 @@ export function paintShip(ctx: CanvasRenderingContext2D, paint: ShipPaint): bool
   return true;
 }
 
-export function nozzleLocal(faction: string, hullId: string): { x: number; y: number }[] {
+export function nozzleLocal(faction: string, hullId: string): { x: number; y: number; r: number }[] {
   const ship = shipDef(faction, hullId);
-  if (!ship?.nozzles.length) return [{ x: 0, y: 0.35 }];
-  return ship.nozzles.map((n) => ({ x: n.u - 0.5, y: n.v - 0.5 }));
+  if (!ship?.nozzles.length) return [{ x: 0, y: 0.35, r: 0.02 }];
+  return ship.nozzles.map((n) => ({ x: n.u - 0.5, y: n.v - 0.5, r: n.radius }));
 }
