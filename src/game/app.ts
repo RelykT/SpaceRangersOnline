@@ -26,7 +26,7 @@ import {
   slotLayout,
 } from '../sim/content';
 import { stationPrice } from '../sim/economy';
-import { cargoUsed, computeFit, hullOf } from '../sim/fitting';
+import { cargoUsed, computeFit, hullOf, moduleAffinity } from '../sim/fitting';
 import { economyVolatility, skillBonus } from '../sim/origin';
 import { loreHtml, mainMenuHtml, loadHtml, settingsHtml, wizardHtml, pilotHtml, type Draft } from './menus';
 import { preloadArt } from '../render/art';
@@ -175,8 +175,8 @@ export function startGame(root: HTMLElement): void {
   let lootAt = 0;
   const older = new Map<string, { x: number; y: number }>();
   const newer = new Map<string, { x: number; y: number }>();
-  const spaceCam: Camera & { follow: boolean } = { x: 0, y: 0, zoom: 0.38, viewW: 1, viewH: 1, follow: true };
-  let spaceZoom = 0.38;
+  const spaceCam: Camera & { follow: boolean } = { x: 0, y: 0, zoom: 0.64, viewW: 1, viewH: 1, follow: true };
+  let spaceZoom = 0.64;
   let mapZoom = 0.3;
   const mapCam: Camera = { x: 0, y: 0, zoom: 0.3, viewW: 1, viewH: 1 };
 
@@ -1196,7 +1196,7 @@ export function startGame(root: HTMLElement): void {
       const dockId = world.player.dockedAt;
       const owner = world.stations.find((s) => s.id === dockId)?.owner ?? 'free';
       const hctx = hangar.getContext('2d');
-      if (hctx) drawHangar(hctx, hangar.width, hangar.height, owner, now, world.player.ship.hullId);
+      if (hctx) drawHangar(hctx, hangar.width, hangar.height, owner, now, world.player.ship.hullId, world.player.ship.modules);
     }
     if (portrait) {
       const race = pilotOpen && world?.player.origin ? world.player.origin.race : draft.race;
@@ -1339,15 +1339,19 @@ function stationHtml(world: World, stationId: string, tab: string, fitSlot: numb
     const reps = (Object.keys(FACTION_SHORT) as (keyof typeof FACTION_SHORT)[]).map((id) => `${FACTION_SHORT[id]} ${Math.round(world.player.reputation[id])}`).join(' · ');
     body = `<p>Щит ${Math.round(world.player.ship.shield)} / ${Math.round(fit.maxShield)}</p><p>Броня ${Math.round(world.player.ship.armor)} / ${Math.round(fit.maxArmor)}</p><p>Корпус ${Math.round(world.player.ship.hull)} / ${Math.round(fit.maxHull)}</p><button type="button" class="primary" data-act="repair" ${cost <= 0 ? 'disabled' : ''}>Чинить за ${cost.toLocaleString('ru-RU')}</button><h3>Репутация</h3><p>${reps}</p><p class="sub">Побед: ${world.player.kills}. Склад модулей летит с кораблём.</p>`;
   }
-    return `<canvas id="hangar" width="720" height="160"></canvas><div class="tabs">${tabs}<button type="button" class="primary" data-act="undock">В космос</button></div><p class="sub">${esc(st.name)} · ${esc(FACTION_NAME[st.owner])}</p>${body}`;
+    return `<canvas id="hangar" width="720" height="280"></canvas><div class="tabs">${tabs}<button type="button" class="primary" data-act="undock">В космос</button></div><p class="sub">${esc(st.name)} · ${esc(FACTION_NAME[st.owner])}</p>${body}`;
 }
 
 function catalogHtml(world: World, owner: World['stations'][number]['owner'], tech: number, slot: string, index: number): string {
   const mods = MODULES.filter((m) => m.slot === slot && m.tech <= tech);
   const owned = Object.entries(world.player.locker).filter(([id, n]) => n > 0 && MODULE_BY_ID[id]?.slot === slot);
   const own = owned.map(([id, n]) => `<button type="button" data-act="fit-owned" data-mod="${id}" data-index="${index}">Со склада: ${esc(MODULE_BY_ID[id]!.name)} ×${n}</button>`).join(' ');
-  const shop = mods.map((m) => `<button type="button" data-act="fit" data-mod="${m.id}" data-index="${index}">${esc(m.name)} · ${m.price.toLocaleString('ru-RU')} · ${m.pg} сети / ${m.cpu} цп</button>`).join(' ');
-  return `<h3>Слот</h3><p class="sub">${mods[0] ? esc(mods[0].blurb) : ''}</p><div class="stack">${own}${shop}<button type="button" data-act="sell-mod" data-mod="${owned[0]?.[0] ?? ''}" ${owned.length ? '' : 'disabled'}>Продать один со склада</button></div><p class="sub">Скидка растёт с репутацией у ${esc(FACTION_SHORT[owner])}.</p>`;
+  const race = world.player.origin?.race;
+  const shop = mods.map((m) => {
+    const kin = moduleAffinity(m.id) === race ? ' · сродство +10%' : '';
+    return `<button type="button" data-act="fit" data-mod="${m.id}" data-index="${index}">${esc(m.name)} · ${m.price.toLocaleString('ru-RU')} · ${m.pg} сети / ${m.cpu} цп${kin}</button>`;
+  }).join(' ');
+  return `<h3>Слот</h3><p class="sub">${mods[0] ? esc(mods[0].blurb) : ''}</p><div class="stack">${own}${shop}<button type="button" data-act="sell-mod" data-mod="${owned[0]?.[0] ?? ''}" ${owned.length ? '' : 'disabled'}>Продать один со склада</button></div><p class="sub">Скидка растёт с репутацией у ${esc(FACTION_SHORT[owner])}. Модуль своего народа даёт +10%.</p>`;
 }
 
 function hashFace(id: string): number {
@@ -1368,7 +1372,8 @@ function hailOf(world: World, sel: Sel): string {
 }
 
 function playerFit(player: Player) {
-  return computeFit(player.ship, { bonus: player.skills ? skillBonus(player.skills, player.origin?.race ?? 'kvissae') : undefined });
+  const race = player.origin?.race ?? 'kvissae';
+  return computeFit(player.ship, { race, bonus: player.skills ? skillBonus(player.skills, race) : undefined });
 }
 
 function helpHtml(): string {

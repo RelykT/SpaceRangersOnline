@@ -29,7 +29,7 @@ import { generateMap, syncOrbits } from './galaxy';
 import { jumpDuration, separateBodies, updateMotion } from './motion';
 import { dist, findBody, findPath, isNeighbor, planetById, pilotsInSystem, stationById, stationTech, systemById } from './query';
 import { clamp, strHash, unit } from './rng';
-import type { Body, CaptainOrigin, Command, FactionId, GalaxySettings, GameEvent, Mission, Pilot, Player, PlayableRace, SkillId, StarSystem, World } from './types';
+import type { Body, CaptainOrigin, Command, DamageType, FactionId, GalaxySettings, GameEvent, Mission, Pilot, Player, PlayableRace, SkillId, StarSystem, World } from './types';
 import { LIVING_FACTIONS, SIM_DT } from './types';
 
 function pushLog(world: World, text: string): void {
@@ -110,12 +110,17 @@ export function createWorld(seed: number, playerName: string, options: NewGameOp
   return world;
 }
 
+function playableRace(faction: FactionId): PlayableRace | undefined {
+  if (faction === 'human' || faction === 'zhargi' || faction === 'kvissae' || faction === 'taeyori' || faction === 'virex') return faction;
+  return undefined;
+}
+
 function fitOf(body: Body, scrammed = false) {
-  if (body.id !== 'player') return computeFit(body.ship, { scrammed });
+  if (body.id !== 'player') return computeFit(body.ship, { scrammed, race: playableRace(body.faction) });
   const player = body as Player;
   const race = player.origin?.race ?? 'kvissae';
   const skills = player.skills ?? player.origin?.skills;
-  return computeFit(body.ship, { scrammed, bonus: skills ? skillBonus(skills, race) : undefined });
+  return computeFit(body.ship, { scrammed, race, bonus: skills ? skillBonus(skills, race) : undefined });
 }
 
 function makePlayer(world: World, name: string, origin: CaptainOrigin): Player {
@@ -127,7 +132,7 @@ function makePlayer(world: World, name: string, origin: CaptainOrigin): Player {
   const career = CAREER_BY_ID[origin.career];
   const ship = freshShip(career.hullId, career.modules);
   const skills = { ...origin.skills };
-  const fitted = computeFit(ship, { bonus: skillBonus(skills, origin.race) });
+  const fitted = computeFit(ship, { race: origin.race, bonus: skillBonus(skills, origin.race) });
   ship.shield = fitted.maxShield;
   ship.armor = fitted.maxArmor;
   ship.hull = fitted.maxHull;
@@ -187,13 +192,13 @@ function addIntro(world: World): void {
     type: 'deliver',
     status: 'offer',
     stationId: home.id,
-    title: 'Первый контракт: зеркальный сплав',
-    desc: `Док выдаёт 12 ед. зеркального сплава. Довезите их на ${dest.name}, не продав по пути. Награда ждёт на месте.`,
+    title: 'Первый контракт: никель',
+    desc: `Док выдаёт 12 ед. никеля. Довезите их на ${dest.name}, не продав по пути. Награда ждёт на месте.`,
     reward: 4600,
     repFaction: home.owner === 'free' ? 'kvissae' : home.owner,
     repAmount: 5,
     expires: 900,
-    goodId: 'alloy',
+    goodId: 'ni',
     qty: 12,
     destStationId: dest.id,
     destSystemId: dest.systemId,
@@ -859,7 +864,8 @@ function buyHull(world: World, hullId: string): void {
     return;
   }
   const old = HULL_BY_ID[world.player.ship.hullId];
-  const price = priceOfModule(world, hull.price, st.owner);
+  let price = priceOfModule(world, hull.price, st.owner);
+  if (world.player.origin?.race === 'taeyori') price = Math.round(price * 1.25);
   const refund = Math.round((old?.price ?? 0) * 0.45);
   if (world.player.credits + refund < price) {
     pushLog(world, 'Не хватает кредитов на корпус.');
@@ -938,7 +944,7 @@ function acceptMission(world: World, id: string): void {
   }
   if (mission.type === 'deliver') {
     const qty = mission.qty;
-    const good = mission.goodId ?? 'ore';
+    const good = mission.goodId ?? 'fe';
     if (cargoFree(world.player.ship, world.player.cargo) < qty) {
       pushLog(world, 'В трюме нет места под контракт.');
       return;
@@ -1030,7 +1036,7 @@ function updateEvents(world: World): void {
   if (!sys) return;
   const kinds: GameEvent['kind'][] = ['epidemic', 'shortage', 'boom', 'raid', 'incursion', 'crisis'];
   const kind = kinds[Math.floor(unit(world.seed, window, 11) * kinds.length)]!;
-  const good = ['meds', 'food', 'fuel', 'cells', 'iso', 'plates'][Math.floor(unit(world.seed, window, 12) * 6)]!;
+  const good = ['ti', 'he3', 'w', 'rare', 'deuterium', 'crystals'][Math.floor(unit(world.seed, window, 12) * 6)]!;
   const text = eventText(kind, sys.name, good);
   const event: GameEvent = {
     id: `e${window}-${sys.id}`,
@@ -1290,6 +1296,7 @@ function shoot(world: World, attacker: Body, target: Body): void {
       kind: 'hit',
       fromX: attacker.x,
       fromY: attacker.y,
+      fx: shotFx(attacker.faction, weapon.type),
     });
   }
 }
@@ -1510,7 +1517,7 @@ function makeOffer(world: World, stationId: string, salt: number): Mission | nul
   const repFaction = station.owner === 'free' || station.owner === 'pirate' || station.owner === 'omnir' ? 'kvissae' : station.owner;
   const id = `m${world.tick}-${salt}-${stationId}`;
   if (kind === 'deliver') {
-    const goods = ['alloy', 'meds', 'cells', 'plates', 'fuel', 'food'];
+    const goods = ['ni', 'ti', 'pt', 'rare', 'he3', 'al'];
     const good = goods[Math.floor(unit(world.seed, salt, 4) * goods.length)]!;
     const qty = 8 + Math.floor(unit(world.seed, salt, 5) * 14);
     const hops = (dest.path?.length ?? 2) - 1;
@@ -1579,7 +1586,36 @@ function makeOffer(world: World, stationId: string, salt: number): Mission | nul
   };
 }
 
+function shotFx(faction: FactionId, type: DamageType): 'laser' | 'plasma' | 'slug' | 'missile' | 'spore' | 'ion' | 'lance' {
+  if (faction === 'omnir') return 'spore';
+  if (faction === 'taeyori' && (type === 'em' || type === 'thermal')) return 'lance';
+  if (faction === 'virex' && type === 'em') return 'ion';
+  if (type === 'explosive') return 'missile';
+  if (type === 'kinetic') return 'slug';
+  if (type === 'thermal') return 'plasma';
+  return 'laser';
+}
+
+function absorbWrecks(world: World): void {
+  const mouths = world.pilots.filter((p) => p.faction === 'omnir' && !p.destroyed && !p.dockedAt);
+  if (!mouths.length || !world.wrecks.length) return;
+  const gone = new Set<string>();
+  for (const wreck of world.wrecks) {
+    for (const pilot of mouths) {
+      if (pilot.systemId !== wreck.systemId) continue;
+      if (dist(pilot.x, pilot.y, wreck.x, wreck.y) > 150) continue;
+      const fit = fitOf(pilot);
+      pilot.ship.hull = Math.min(fit.maxHull, pilot.ship.hull + 12);
+      pilot.cargo.biomass = (pilot.cargo.biomass ?? 0) + 1;
+      gone.add(wreck.id);
+      break;
+    }
+  }
+  if (gone.size) world.wrecks = world.wrecks.filter((w) => !gone.has(w.id));
+}
+
 function expireWorld(world: World): void {
+  absorbWrecks(world);
   world.wrecks = world.wrecks.filter((w) => w.expiresAt > world.time);
 }
 

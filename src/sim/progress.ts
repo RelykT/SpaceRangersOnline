@@ -85,18 +85,22 @@ export const HULL_TRACK: Record<string, string> = {
   korob: 'hull.hauler',
   oplot: 'hull.cruiser',
   monolit: 'hull.capital',
+  zhargi_cruiser: 'hull.cruiser',
+  omnir_carrier: 'hull.hauler',
 };
 
 export const HULL_GATES: Record<string, Gate[]> = {
   klinok: [{ track: 'hull.scout', level: 2 }],
   oplot: [{ track: 'hull.strike', level: 3 }],
   monolit: [{ track: 'hull.cruiser', level: 4 }],
+  zhargi_cruiser: [{ track: 'hull.strike', level: 3 }],
 };
 
 /** Minimum faction rank at the selling station. */
 export const HULL_RANK: Record<string, number> = {
   oplot: 3,
   monolit: 4,
+  zhargi_cruiser: 3,
 };
 
 export const WEAPON_GROUP: Record<string, string> = {

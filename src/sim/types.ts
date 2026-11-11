@@ -1,6 +1,6 @@
 export const SIM_HZ = 20;
 export const SIM_DT = 1 / SIM_HZ;
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 export type FactionId = 'human' | 'kvissae' | 'zhargi' | 'taeyori' | 'virex' | 'omnir' | 'free' | 'pirate';
 export type PlayableRace = 'human' | 'kvissae' | 'zhargi' | 'taeyori' | 'virex';
@@ -369,6 +369,8 @@ export interface Ping {
   kind: 'hit' | 'explode' | 'info';
   fromX?: number;
   fromY?: number;
+  /** How the shot should be drawn: beam, bolt, slug, missile, spore. */
+  fx?: 'laser' | 'plasma' | 'slug' | 'missile' | 'spore' | 'ion' | 'lance';
 }
 
 export type SkillId = 'aim' | 'helm' | 'engineering' | 'trade' | 'charm' | 'lead' | 'survey';

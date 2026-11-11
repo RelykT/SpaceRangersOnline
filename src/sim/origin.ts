@@ -28,23 +28,23 @@ export const RACE_INFO: Record<
   { bonus: string; rep: Partial<Record<FactionId, number>> }
 > = {
   human: {
-    bonus: 'Универсалы. +1 Обаяние и лидерство, +12% сети и процессора, смешанный экипаж бьёт сильнее.',
+    bonus: 'Универсалы. +12% сети и процессора. Своя кинетика и ракеты бьют на десятую сильнее.',
     rep: { human: 28, kvissae: 10, zhargi: 8, taeyori: 8, virex: 8, pirate: -2 },
   },
   zhargi: {
-    bonus: 'Воины-кузнецы. +1 Техника и точность, толстая броня, тяжёлый залп, медленный ход. Металл дешёвый.',
+    bonus: 'Воины-кузнецы. Толстая броня сама затягивается, щит тонкий, масс-драйверы свои. Металл дешёвый, ход медленный.',
     rep: { human: 6, kvissae: 2, zhargi: 44, taeyori: 0, virex: -14, pirate: -8 },
   },
   kvissae: {
-    bonus: 'Торговцы. +1 Торговля и манёвр, скорость и трюм, лучшие цены, тонкая броня.',
+    bonus: 'Торговцы. Быстрее, больше трюм, щит крепче, броня тоньше. Лазеры и термал своего народа сильнее.',
     rep: { human: 10, kvissae: 42, zhargi: 4, taeyori: 12, virex: 8, pirate: -6 },
   },
   taeyori: {
-    bonus: 'Древние. +1 Разведка, сильный щит, саморемонт, инерция, карта помнится дольше.',
+    bonus: 'Древние. Щит встаёт сам, ЭМ-копья дальние, ход инерционный. Корпуса дороже. Кристаллы Тэйори — их товар.',
     rep: { human: 8, kvissae: 12, zhargi: 2, taeyori: 42, virex: 4, pirate: -2 },
   },
   virex: {
-    bonus: 'Технократы. +1 Техника, сенсоры и процессор, дорогой ремонт.',
+    bonus: 'Технократы. Сенсоры, процессор, дроны и РЭБ. Свои модули сильнее. Ремонт дорогой.',
     rep: { human: 6, kvissae: 8, zhargi: -10, taeyori: 4, virex: 42, pirate: -6 },
   },
 };
@@ -67,7 +67,7 @@ export const CAREERS: CareerDef[] = [
     hullId: 'korob',
     modules: ['luch', 'veil', 'poryv', 'zapas', 'plate', 'um', 'rig-hold', 'rig-hold'],
     credits: 26000,
-    cargo: { alloy: 20, food: 30 },
+    cargo: { ni: 16, al: 22 },
   },
   {
     id: 'soldier',
@@ -76,7 +76,7 @@ export const CAREERS: CareerDef[] = [
     hullId: 'klinok',
     modules: ['igla', 'luch', 'igla', 'veil', 'poryv', 'plate', 'klin', 'srez', 'rig-pol', null],
     credits: 15000,
-    cargo: { cells: 4, food: 8 },
+    cargo: { w: 4, he3: 8 },
   },
   {
     id: 'hunter',
@@ -85,7 +85,7 @@ export const CAREERS: CareerDef[] = [
     hullId: 'klinok',
     modules: ['rels', 'igla', 'igla', 'metka', 'poryv', 'klin', 'zapas', 'srez', 'rig-range', null],
     credits: 18000,
-    cargo: { food: 8 },
+    cargo: { he3: 8 },
   },
   {
     id: 'explorer',
@@ -94,7 +94,7 @@ export const CAREERS: CareerDef[] = [
     hullId: 'iskra',
     modules: ['luch', null, 'veil', 'poryv', 'zapas', 'um', 'rig-tug'],
     credits: 14000,
-    cargo: { data: 6, food: 8 },
+    cargo: { crystals: 4, he3: 6 },
   },
   {
     id: 'pirate',
@@ -103,7 +103,7 @@ export const CAREERS: CareerDef[] = [
     hullId: 'klinok',
     modules: ['igla', 'igla', 'plazma', 'klinch', 'tros', 'plate', 'klin', 'zapas', null, null],
     credits: 8000,
-    cargo: { cells: 2 },
+    cargo: { w: 2 },
   },
 ];
 
@@ -129,9 +129,9 @@ export function skillBonus(skills: SkillSet, race: PlayableRace, allies = 0): Fi
   const friends = Math.max(0, Math.min(race === 'human' ? 4 : 3, allies));
   return {
     dmg: (1 + (race === 'human' ? 0.05 : 0.03) * friends) * (race === 'zhargi' ? 1.08 : 1),
-    speed: (1 + 0.05 * skills.helm) * (race === 'zhargi' ? 0.86 : race === 'kvissae' ? 1.14 : race === 'taeyori' ? 0.96 : 1),
-    shield: race === 'taeyori' ? 1.22 : race === 'human' ? 1.04 : 1,
-    armor: (race === 'zhargi' ? 1.2 : race === 'kvissae' ? 0.78 : race === 'human' ? 1.04 : 1) * (1 + 0.03 * skills.engineering),
+    speed: (1 + 0.05 * skills.helm) * (race === 'zhargi' ? 0.84 : race === 'kvissae' ? 1.16 : race === 'taeyori' ? 0.94 : 1),
+    shield: race === 'taeyori' ? 1.16 : race === 'human' ? 1.04 : 1,
+    armor: (race === 'human' ? 1.04 : 1) * (1 + 0.03 * skills.engineering),
     cargo: (race === 'kvissae' ? 1.24 : race === 'human' ? 1.06 : 1),
     scan: (1 + 0.08 * skills.survey) * (race === 'virex' ? 1.22 : race === 'taeyori' ? 1.12 : 1),
     opt: (1 + 0.04 * skills.aim) * (race === 'virex' ? 1.06 : 1),

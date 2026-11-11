@@ -1,6 +1,6 @@
 import { HULL_BY_ID, MODULE_BY_ID, slotLayout } from './content';
 import { clamp } from './rng';
-import type { DamageType, FitStats, HullDef, ModuleDef, Resists, ShipInstance } from './types';
+import type { DamageType, FitStats, HullDef, ModuleDef, PlayableRace, Resists, ShipInstance } from './types';
 import { DAMAGE_TYPES } from './types';
 
 export interface FitBonus {
@@ -19,6 +19,37 @@ export interface FitBonus {
 export interface FitOptions {
   scrammed?: boolean;
   bonus?: FitBonus;
+  /** Народ пилота. Свои модули дают +10% к тому, что они делают. */
+  race?: PlayableRace;
+}
+
+const AFFINITY: Record<string, PlayableRace> = {
+  igla: 'human',
+  igla2: 'human',
+  oskol: 'human',
+  rels: 'zhargi',
+  plate: 'zhargi',
+  plate2: 'zhargi',
+  luch: 'kvissae',
+  zhar: 'kvissae',
+  korona: 'kvissae',
+  plazma: 'kvissae',
+  zhar2: 'taeyori',
+  veil: 'taeyori',
+  rosa: 'taeyori',
+  shov: 'virex',
+  klinch: 'virex',
+  metka: 'virex',
+  um: 'virex',
+  tros: 'virex',
+};
+
+export function moduleAffinity(id: string): PlayableRace | undefined {
+  return AFFINITY[id];
+}
+
+function affinityMul(id: string, race: PlayableRace | undefined): number {
+  return race && AFFINITY[id] === race ? 1.1 : 1;
 }
 
 function emptyDps(): Record<DamageType, number> {
@@ -116,14 +147,15 @@ export function computeFit(ship: ShipInstance, opts: FitOptions = {}): FitStats 
     pg += m.pgAdd ?? 0;
     cpu += m.cpuAdd ?? 0;
     const on = ship.online[i] !== false;
+    const kin = affinityMul(m.id, opts.race);
     if (m.slot !== 'rig' && !on) {
       fitted.push({ m, index: i, on });
       continue;
     }
-    if (m.shieldHp) shieldHp += m.shieldHp;
-    if (m.armorHp) armorHp += m.armorHp;
-    if (m.shieldRegen) shieldRegen += m.shieldRegen;
-    if (m.armorRegen) armorRegen += m.armorRegen;
+    if (m.shieldHp) shieldHp += m.shieldHp * kin;
+    if (m.armorHp) armorHp += m.armorHp * kin;
+    if (m.shieldRegen) shieldRegen += m.shieldRegen * kin;
+    if (m.armorRegen) armorRegen += m.armorRegen * kin;
     if (m.capAdd) capAdd += m.capAdd;
     if (m.capRegenAdd) capRegenAdd += m.capRegenAdd;
     if (m.capRegenMult) capRegenMult *= m.capRegenMult;
@@ -151,7 +183,7 @@ export function computeFit(ship: ShipInstance, opts: FitOptions = {}): FitStats 
       weapons.push({
         index,
         name: m.name,
-        dps: on ? m.weapon.dps * dmgMult : 0,
+        dps: on ? m.weapon.dps * dmgMult * affinityMul(m.id, opts.race) : 0,
         type: m.weapon.type,
         optimal: m.weapon.optimal * optMult,
         falloff: m.weapon.falloff * fallMult,
@@ -161,13 +193,14 @@ export function computeFit(ship: ShipInstance, opts: FitOptions = {}): FitStats 
         online: on,
       });
     }
+    const kin = affinityMul(m.id, opts.race);
     if (m.repairShield) {
-      repairs.push({ index, layer: 'shield', hp: m.repairShield.hp, cycle: m.repairShield.cycle, cap: m.repairShield.cap, online: on });
+      repairs.push({ index, layer: 'shield', hp: m.repairShield.hp * kin, cycle: m.repairShield.cycle, cap: m.repairShield.cap, online: on });
     }
     if (m.repairArmor) {
-      repairs.push({ index, layer: 'armor', hp: m.repairArmor.hp, cycle: m.repairArmor.cycle, cap: m.repairArmor.cap, online: on });
+      repairs.push({ index, layer: 'armor', hp: m.repairArmor.hp * kin, cycle: m.repairArmor.cycle, cap: m.repairArmor.cap, online: on });
     }
-    if (m.web) ewars.push({ index, kind: 'web', amount: m.web.amount, optimal: m.web.optimal, falloff: m.web.falloff, cycle: m.web.cycle, cap: m.web.cap, online: on });
+    if (m.web) ewars.push({ index, kind: 'web', amount: m.web.amount * kin, optimal: m.web.optimal, falloff: m.web.falloff, cycle: m.web.cycle, cap: m.web.cap, online: on });
     if (m.scram) ewars.push({ index, kind: 'scram', amount: 1, optimal: m.scram.optimal, falloff: m.scram.falloff, cycle: m.scram.cycle, cap: m.scram.cap, online: on });
     if (m.painter) {
       ewars.push({
@@ -185,6 +218,16 @@ export function computeFit(ship: ShipInstance, opts: FitOptions = {}): FitStats 
 
   shieldHp *= bonus.shield;
   armorHp *= bonus.armor;
+  if (opts.race === 'zhargi') {
+    armorRegen += Math.max(3, hull.armor * 0.007);
+    armorHp *= 1.22;
+    shieldHp *= 0.72;
+  }
+  if (opts.race === 'taeyori') shieldRegen *= 1.45;
+  if (opts.race === 'kvissae') {
+    shieldHp *= 1.14;
+    armorHp *= 0.82;
+  }
 
   if (pgUsed > pg + 1e-6) reason.push(`сеть ${pgUsed}/${pg}`);
   if (cpuUsed > cpu + 1e-6) reason.push(`процессор ${cpuUsed}/${cpu}`);

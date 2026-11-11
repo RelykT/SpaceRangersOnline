@@ -34,6 +34,19 @@ export function hullFor(role: Role, tier: number): string {
   return 'iskra';
 }
 
+function racialKit(faction: FactionId, ids: string[]): string[] {
+  const swap: Partial<Record<FactionId, Record<string, string>>> = {
+    human: { zhar: 'igla', korona: 'oskol' },
+    zhargi: { luch: 'rels', zhar: 'igla', zhar2: 'rels', korona: 'igla2' },
+    kvissae: { igla: 'luch', igla2: 'zhar', rels: 'korona' },
+    taeyori: { igla: 'luch', igla2: 'zhar2', rels: 'zhar2', plazma: 'zhar2' },
+    virex: { luch: 'metka', zhar: 'plazma' },
+    omnir: { luch: 'zhar', rels: 'plazma', oskol: 'zhar' },
+  };
+  const map = swap[faction] ?? {};
+  return ids.map((id) => map[id] ?? id);
+}
+
 export function equip(hullId: string, priority: string[]): (string | null)[] {
   const layout = slotLayout(hullOf(hullId));
   const modules: (string | null)[] = layout.map(() => null);
@@ -120,8 +133,10 @@ export function spawnPilot(world: World, opts: SpawnOpts): Pilot {
   world.nextId += 1;
   const id = `n${world.nextId.toString(36)}`;
   const tier = opts.tier ?? 1;
-  const hullId = hullFor(opts.role, tier);
-  const ship = freshShip(hullId, equip(hullId, kit(opts.role, tier)));
+  let hullId = hullFor(opts.role, tier);
+  if (opts.faction === 'omnir' && opts.role === 'trader') hullId = 'omnir_carrier';
+  if (opts.faction === 'zhargi' && opts.role === 'defender' && tier >= 3 && strHash(id) % 2 === 0) hullId = 'zhargi_cruiser';
+  const ship = freshShip(hullId, equip(hullId, racialKit(opts.faction, kit(opts.role, tier))));
   const homeSys = opts.homeSystemId ?? opts.systemId;
   const station =
     (opts.homeStationId ? stationById(world, opts.homeStationId) : undefined) ??
@@ -172,7 +187,7 @@ export function spawnPilot(world: World, opts: SpawnOpts): Pilot {
       grudgeUntil: 0,
     },
   };
-  if (opts.role === 'trader') pilot.cargo.food = 6 + (strHash(id) % 8);
+  if (opts.role === 'trader') pilot.cargo[opts.faction === 'omnir' ? 'biomass' : 'al'] = 6 + (strHash(id) % 8);
   world.pilots.push(pilot);
   return pilot;
 }
@@ -186,7 +201,10 @@ export function revivePilot(world: World, pilot: Pilot): void {
     world.stations[0];
   if (!station) return;
   pilot.destroyed = false;
-  pilot.ship = freshShip(hullFor(pilot.role, pilot.tier), equip(hullFor(pilot.role, pilot.tier), kit(pilot.role, pilot.tier)));
+  let hullId = hullFor(pilot.role, pilot.tier);
+  if (pilot.faction === 'omnir' && pilot.role === 'trader') hullId = 'omnir_carrier';
+  if (pilot.ship.hullId === 'zhargi_cruiser') hullId = 'zhargi_cruiser';
+  pilot.ship = freshShip(hullId, equip(hullId, racialKit(pilot.faction, kit(pilot.role, pilot.tier))));
   pilot.systemId = station.systemId;
   pilot.dockedAt = station.id;
   pilot.x = station.x;

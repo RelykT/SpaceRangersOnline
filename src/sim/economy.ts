@@ -3,21 +3,22 @@ import { clamp } from './rng';
 import type { FactionId, GameEvent, MarketLot, PlanetType, Station } from './types';
 
 const PROFILE: Record<PlanetType, { out: Record<string, number>; inn: Record<string, number> }> = {
-  volcanic: { out: { ore: 0.55, iso: 0.22, alloy: 0.16 }, inn: { food: 0.36, water: 0.3, meds: 0.12, cells: 0.08 } },
-  ocean: { out: { water: 0.72, food: 0.48, pearl: 0.14 }, inn: { ore: 0.22, plates: 0.16, fuel: 0.18 } },
-  barren: { out: { ore: 0.42, alloy: 0.12 }, inn: { food: 0.4, water: 0.36, fuel: 0.16 } },
-  ice: { out: { water: 0.58, iso: 0.36, fuel: 0.16 }, inn: { food: 0.3, meds: 0.12, drones: 0.1 } },
-  gas: { out: { fuel: 0.64, iso: 0.2 }, inn: { food: 0.26, plates: 0.2, drones: 0.16 } },
-  garden: { out: { food: 0.74, meds: 0.28, pearl: 0.2, water: 0.22 }, inn: { alloy: 0.2, plates: 0.14, fuel: 0.16 } },
-  hive: { out: { drones: 0.48, plates: 0.38, cells: 0.3, alloy: 0.22 }, inn: { ore: 0.48, food: 0.42, fuel: 0.26, water: 0.2 } },
+  volcanic: { out: { fe: 0.55, ti: 0.34, ni: 0.28, w: 0.18 }, inn: { he3: 0.22, crystals: 0.12, rare: 0.1 } },
+  ocean: { out: { al: 0.42, cu: 0.3 }, inn: { fe: 0.22, ti: 0.16, he3: 0.18 } },
+  barren: { out: { fe: 0.42, al: 0.2, ni: 0.16 }, inn: { he3: 0.24, deuterium: 0.16, rare: 0.1 } },
+  ice: { out: { deuterium: 0.48, he3: 0.3 }, inn: { fe: 0.2, cu: 0.14, crystals: 0.1 } },
+  gas: { out: { he3: 0.64, deuterium: 0.36 }, inn: { ti: 0.18, al: 0.14, rare: 0.12 } },
+  garden: { out: { al: 0.4, cu: 0.28, rare: 0.16 }, inn: { fe: 0.2, w: 0.12, he3: 0.16 } },
+  hive: { out: { cu: 0.46, al: 0.32, pt: 0.22, rare: 0.2 }, inn: { fe: 0.48, ti: 0.24, biomass: 0.16, he3: 0.2 } },
 };
 
 const RACE_OUT: Partial<Record<FactionId, Record<string, number>>> = {
-  human: { food: 1.2, plates: 1.15 },
-  zhargi: { ore: 1.85, alloy: 1.75, cells: 1.25 },
-  kvissae: { pearl: 1.5, food: 1.2, data: 1.25 },
-  taeyori: { data: 1.8, meds: 1.35, iso: 1.25 },
-  virex: { drones: 1.65, plates: 1.5, alloy: 1.15 },
+  human: { fe: 1.25, al: 1.2, cu: 1.15 },
+  zhargi: { fe: 1.9, ni: 1.8, ti: 1.55, w: 1.45 },
+  kvissae: { pt: 1.45, cu: 1.3, al: 1.25 },
+  taeyori: { crystals: 1.9, rare: 1.35 },
+  virex: { rare: 1.6, pt: 1.35, cu: 1.25 },
+  omnir: { biomass: 1.8 },
 };
 
 export function makeMarket(
@@ -38,9 +39,10 @@ export function makeMarket(
       out *= 0.12;
       inn *= 1.35;
     }
-    if (id === 'data' && (faction === 'taeyori' || security > 0.7)) out += 0.18;
-    if ((id === 'ore' || id === 'alloy') && faction === 'zhargi') out += 0.2;
-    if (id === 'cells' && security < 0.35) inn += 0.12;
+    if (id === 'crystals' && (faction === 'taeyori' || security > 0.7)) out += 0.16;
+    if ((id === 'fe' || id === 'ni' || id === 'ti' || id === 'w') && faction === 'zhargi') out += 0.22;
+    if (id === 'w' && security < 0.35) inn += 0.12;
+    if (id === 'biomass' && faction === 'omnir') out += 0.45;
     const weight = out + inn;
     const capacity = Math.round(220 + weight * 520 + (out > inn ? 80 : 0));
     const comfort = out >= inn ? 0.45 + rng() * 0.35 : 0.18 + rng() * 0.22;
@@ -67,12 +69,12 @@ export function eventPriceMult(events: GameEvent[], systemId: string, goodId: st
   for (const e of events) {
     if (e.systemId !== systemId) continue;
     if (e.kind === 'epidemic') {
-      if (goodId === 'meds') m *= 1.65;
-      else if (goodId === 'food') m *= 1.25;
+      if (goodId === 'crystals') m *= 1.55;
+      else if (goodId === 'biomass') m *= 1.4;
     } else if (e.kind === 'shortage' && e.goodId === goodId) m *= 1.85;
-    else if (e.kind === 'boom' && (goodId === 'pearl' || goodId === 'plates' || goodId === 'alloy')) m *= 0.82;
+    else if (e.kind === 'boom' && (goodId === 'pt' || goodId === 'rare' || goodId === 'al')) m *= 0.82;
     else if (e.kind === 'crisis') m *= 1.12;
-    else if (e.kind === 'incursion' && (goodId === 'cells' || goodId === 'fuel')) m *= 1.35;
+    else if (e.kind === 'incursion' && (goodId === 'he3' || goodId === 'deuterium' || goodId === 'w')) m *= 1.35;
   }
   return m;
 }
@@ -83,7 +85,7 @@ export function quote(lot: MarketLot, extra = 1, volatility = 1): number {
 
 export function priceExtra(events: GameEvent[], systemId: string, goodId: string, warHere: boolean): number {
   let extra = eventPriceMult(events, systemId, goodId);
-  if (warHere && (goodId === 'cells' || goodId === 'fuel' || goodId === 'meds')) extra *= 1.22;
+  if (warHere && (goodId === 'he3' || goodId === 'w' || goodId === 'crystals')) extra *= 1.22;
   return extra;
 }
 
@@ -177,7 +179,7 @@ export function tickMarket(station: Station, events: GameEvent[], dt: number): v
     const lot = station.market[id];
     if (!lot) continue;
     let cons = lot.consume * consMod;
-    if (events.some((e) => e.systemId === station.systemId && e.kind === 'epidemic' && id === 'meds')) cons *= 1.8;
+    if (events.some((e) => e.systemId === station.systemId && e.kind === 'epidemic' && (id === 'crystals' || id === 'biomass'))) cons *= 1.7;
     if (events.some((e) => e.systemId === station.systemId && e.kind === 'shortage' && e.goodId === id)) cons *= 1.45;
     lot.stock = clamp(lot.stock + (lot.produce * prodMod - cons) * dt, 0, lot.capacity * 3);
   }

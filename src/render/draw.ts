@@ -28,6 +28,7 @@ export interface ShipSample {
   combat: boolean;
   thrust: number;
   boost: boolean;
+  modules: (string | null)[];
 }
 
 interface Particle {
@@ -44,6 +45,19 @@ interface Particle {
 
 const particles: Particle[] = [];
 let seenPing = -1;
+
+interface Bolt {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+  born: number;
+  life: number;
+  color: string;
+  fx: string;
+}
+
+const bolts: Bolt[] = [];
 const nebulaCache = new Map<string, HTMLCanvasElement>();
 const starCache = new Map<string, HTMLCanvasElement>();
 
@@ -238,8 +252,8 @@ export function drawMenu(ctx: CanvasRenderingContext2D, w: number, h: number, ti
     const pw = Math.min(420, w * 0.42);
     ctx.drawImage(planet, w * 0.58 + Math.sin(time * 0.12) * 16, h * 0.18 + Math.cos(time * 0.1) * 10, pw, pw);
   }
-  const fly = (offset: number, speed: number, y: number, hull: string, faction: string) => {
-    const x = ((time * speed + offset) % (w + 280)) - 180;
+  const fly = (offset: number, speed: number, y: number, hull: string, faction: string, size: number) => {
+    const x = ((time * speed + offset) % (w + 360)) - 220;
     drawCraft(ctx, {
       id: `menu-${faction}-${hull}`,
       x,
@@ -247,7 +261,7 @@ export function drawMenu(ctx: CanvasRenderingContext2D, w: number, h: number, ti
       heading: 0.05,
       faction,
       hullId: hull,
-      size: 120,
+      size,
       time,
       combat: faction === 'omnir',
       hullFrac: 1,
@@ -259,33 +273,40 @@ export function drawMenu(ctx: CanvasRenderingContext2D, w: number, h: number, ti
       boost: hull === 'iskra',
     });
   };
+  fly(40, 70, h * 0.26, 'iskra', 'human', 108);
+  fly(320, 48, h * 0.62, 'oplot', 'zhargi', 168);
+  fly(560, 58, h * 0.16, 'korob', 'kvissae', 140);
+  fly(800, 36, h * 0.48, 'monolit', 'taeyori', 230);
+  fly(1040, 64, h * 0.78, 'klinok', 'omnir', 120);
   paintExhaust(ctx);
-  fly(40, 52, h * 0.26, 'iskra', 'human');
-  fly(320, 36, h * 0.62, 'oplot', 'zhargi');
-  fly(560, 46, h * 0.16, 'korob', 'kvissae');
-  fly(800, 30, h * 0.44, 'monolit', 'taeyori');
 }
 
-export function drawHangar(ctx: CanvasRenderingContext2D, w: number, h: number, owner: FactionId, time: number, hullId = 'iskra'): void {
+export function drawHangar(ctx: CanvasRenderingContext2D, w: number, h: number, owner: FactionId, time: number, hullId = 'iskra', modules?: (string | null)[]): void {
   const plate = stationImage(owner);
   if (ready(plate)) cover(ctx, plate, w, h, 0, 0);
   else {
     ctx.fillStyle = '#121a28';
     ctx.fillRect(0, 0, w, h);
   }
+  const size = Math.min(h * 0.96, w * 0.62) * (0.55 + 0.45 * (hullScale(hullId) / 3.8));
+  ctx.fillStyle = 'rgba(0,0,0,.55)';
+  ctx.beginPath();
+  ctx.ellipse(w * 0.5, h * 0.56, size * 0.55, size * 0.38, 0, 0, Math.PI * 2);
+  ctx.fill();
   drawCraft(ctx, {
     id: `hangar-${owner}`,
     x: w * 0.5,
-    y: h * 0.58,
+    y: h * 0.56,
     heading: -Math.PI / 2 + Math.sin(time * 0.25) * 0.04,
     faction: owner === 'free' || owner === 'pirate' ? 'human' : owner,
     hullId,
-    size: Math.min(h * 0.9, w * 0.55) * (hullScale(hullId) / 3.4),
+    size,
     time,
     combat: false,
     hullFrac: 1,
     shieldFrac: 1,
     flash: false,
+    weapons: modules,
     lightX: 0,
     lightY: -1,
     thrust: 0.15,
@@ -403,8 +424,15 @@ export function drawSystem(
   for (const wreck of world.wrecks) {
     if (wreck.systemId !== sys.id) continue;
     const p = worldToScreen(cam, wreck.x, wreck.y);
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(wreck.x * 0.02);
     ctx.fillStyle = '#6e6258';
-    ctx.fillRect(p.x - 6, p.y - 3, 12, 6);
+    ctx.fillRect(-8, -3, 11, 5);
+    ctx.fillRect(3, 2, 7, 4);
+    ctx.fillStyle = '#8a5a3a';
+    ctx.fillRect(-3, -7, 5, 4);
+    ctx.restore();
     if (selectedId === wreck.id) bracket(ctx, p.x, p.y, 16, '#e0b565');
   }
   const dt = 0.016;
@@ -415,9 +443,12 @@ export function drawSystem(
     const ang = Math.atan2(ship.vy, ship.vx);
     const faction = ship.id === 'player' ? (world.player.origin?.race ?? 'human') : ship.faction;
     const color = ship.id === 'player' ? '#9fd4ff' : FACTION_COLOR[ship.faction];
-    const base = qual.name === 'low' ? 64 : qual.name === 'high' ? 96 : 82;
-    const size = base * hullScale(ship.hullId) * (ship.id === 'player' ? 1.06 : 1);
+    const zoomBoost = Math.max(0.75, Math.min(2.2, cam.zoom / 0.5));
+    const base = qual.name === 'low' ? 56 : qual.name === 'high' ? 84 : 72;
+    const size = base * hullScale(ship.hullId) * zoomBoost * (ship.id === 'player' ? 1.06 : 1);
     const star = worldToScreen(cam, 0, 0);
+    const aim = aimScreen(world, cam, ship);
+    const hit = shieldHit(world, ship);
     drawCraft(ctx, {
       id: ship.id,
       x: p.x,
@@ -430,11 +461,16 @@ export function drawSystem(
       combat: ship.combat,
       hullFrac: ship.hull / ship.maxHull,
       shieldFrac: ship.shield / ship.maxShield,
-      flash: ship.combat && ship.shield > 0,
+      flash: false,
       lightX: star.x - p.x,
       lightY: star.y - p.y,
       thrust: ship.thrust,
       boost: ship.boost,
+      weapons: ship.modules,
+      aimX: aim?.x,
+      aimY: aim?.y,
+      ripple: hit.ripple,
+      rippleAng: hit.ang,
     });
     bars(ctx, p.x, p.y - size * 0.45, ship);
     if (selectedId === ship.id) bracket(ctx, p.x, p.y, size * 0.45, color);
@@ -442,21 +478,123 @@ export function drawSystem(
   paintExhaust(ctx);
   for (const ping of world.pings) {
     if (ping.time <= seenPing || ping.systemId !== sys.id) continue;
-    const at = worldToScreen(cam, ping.x, ping.y);
-    if (ping.kind === 'explode') burst(ping.x, ping.y, '#ffb15a', qual.name === 'low' ? 8 : 18, 220);
+    if (ping.kind === 'explode') burst(ping.x, ping.y, '#ffb15a', qual.name === 'low' ? 10 : 22, 240);
     else if (ping.kind === 'hit') {
-      burst(ping.x, ping.y, ping.color, 4, 80);
-      if (qual.glow) {
-        ctx.strokeStyle = 'rgba(120,200,255,.7)';
-        ctx.beginPath();
-        ctx.arc(at.x, at.y, 14, 0, Math.PI * 2);
-        ctx.stroke();
+      burst(ping.x, ping.y, ping.color, qual.name === 'low' ? 3 : 6, 90);
+      if (ping.fromX != null && ping.fromY != null) {
+        bolts.push({
+          x0: ping.fromX,
+          y0: ping.fromY,
+          x1: ping.x,
+          y1: ping.y,
+          born: ping.time,
+          life: ping.fx === 'missile' ? 0.7 : 0.45,
+          color: ping.color,
+          fx: ping.fx ?? 'laser',
+        });
       }
     }
   }
   const newest = world.pings[world.pings.length - 1]?.time ?? seenPing;
   if (newest > seenPing) seenPing = newest;
+  paintBolts(ctx, cam, world.time);
   paintParticles(ctx, cam);
+}
+
+function aimScreen(world: World, cam: Camera, ship: ShipSample): { x: number; y: number } | null {
+  if (!ship.combat) return null;
+  let id: string | null = null;
+  if (ship.id === 'player') {
+    const sel = world.player.selectedId;
+    if (sel && world.pilots.some((p) => p.id === sel && !p.destroyed && !p.dockedAt)) id = sel;
+    else id = world.player.locked.find((lock) => world.pilots.some((p) => p.id === lock && !p.destroyed)) ?? null;
+  } else {
+    id = world.pilots.find((p) => p.id === ship.id)?.ai.targetId ?? null;
+  }
+  if (!id) return null;
+  if (id === 'player') return worldToScreen(cam, world.player.x, world.player.y);
+  const pilot = world.pilots.find((p) => p.id === id);
+  if (!pilot || pilot.destroyed || pilot.dockedAt || pilot.systemId !== ship.systemId) return null;
+  return worldToScreen(cam, pilot.x, pilot.y);
+}
+
+function shieldHit(world: World, ship: ShipSample): { ripple: number; ang: number } {
+  let ripple = 0;
+  let ang = 0;
+  for (const ping of world.pings) {
+    if (ping.kind !== 'hit' || ping.systemId !== ship.systemId) continue;
+    const age = world.time - ping.time;
+    if (age < 0 || age > 0.26) continue;
+    if (Math.hypot(ping.x - ship.x, ping.y - ship.y) > 120) continue;
+    const k = 1 - age / 0.26;
+    if (k > ripple) {
+      ripple = k;
+      ang = ping.fromX == null ? 0 : Math.atan2((ping.fromY ?? ship.y) - ship.y, ping.fromX - ship.x);
+    }
+  }
+  return { ripple, ang };
+}
+
+function paintBolts(ctx: CanvasRenderingContext2D, cam: Camera, time: number): void {
+  for (let i = bolts.length - 1; i >= 0; i--) {
+    const b = bolts[i]!;
+    const age = time - b.born;
+    if (age < 0 || age > b.life) {
+      if (age > b.life) bolts.splice(i, 1);
+      continue;
+    }
+    const k = 1 - age / b.life;
+    const a = worldToScreen(cam, b.x0, b.y0);
+    const c = worldToScreen(cam, b.x1, b.y1);
+    const u = Math.min(1, age / (b.life * 0.55));
+    const hx = a.x + (c.x - a.x) * u;
+    const hy = a.y + (c.y - a.y) * u;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = Math.max(0.15, k);
+    if (b.fx === 'plasma') {
+      ctx.fillStyle = b.color;
+      ctx.beginPath();
+      ctx.arc(hx, hy, 3.5 + Math.sin(age * 48) * 1.6, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (b.fx === 'slug') {
+      ctx.strokeStyle = '#f4f0e4';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(hx - (c.x - a.x) * 0.08, hy - (c.y - a.y) * 0.08);
+      ctx.lineTo(hx, hy);
+      ctx.stroke();
+    } else if (b.fx === 'missile') {
+      ctx.fillStyle = b.color;
+      ctx.fillRect(hx - 2, hy - 2, 4, 4);
+      ctx.globalAlpha = 0.35 * k;
+      ctx.fillStyle = '#9aa0a8';
+      ctx.beginPath();
+      ctx.arc(a.x + (hx - a.x) * 0.6, a.y + (hy - a.y) * 0.6, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (b.fx === 'spore') {
+      ctx.fillStyle = '#d6ff6a';
+      ctx.beginPath();
+      ctx.arc(hx, hy, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ff3355';
+      ctx.beginPath();
+      ctx.arc(hx, hy, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.strokeStyle = b.color;
+      ctx.lineWidth = b.fx === 'lance' ? 3.4 : b.fx === 'ion' ? 2.2 : 1.8;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(hx, hy);
+      ctx.stroke();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.8 * k;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
 }
 
 function drawPlanet(ctx: CanvasRenderingContext2D, id: string, type: string, x: number, y: number, rad: number, spin: number, glow: boolean): void {
@@ -714,7 +852,7 @@ export function pilotSamples(world: World, pos: (id: string, x: number, y: numbe
       x: at.x, y: at.y, vx, vy,
       shield: ship.shield, armor: ship.armor, hull: ship.hull,
       maxShield: Math.max(1, fit.maxShield), maxArmor: Math.max(1, fit.maxArmor), maxHull: Math.max(1, fit.maxHull),
-      docked, jumping, combat, thrust, boost,
+      docked, jumping, combat, thrust, boost, modules: ship.modules,
     });
   };
   const player = world.player;

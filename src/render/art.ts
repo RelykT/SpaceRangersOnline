@@ -1,4 +1,5 @@
 import { getQuality } from './quality';
+import { assetPaths, v10ShipId } from './v10map';
 
 const cache = new Map<string, HTMLImageElement>();
 const masks = new Map<string, HTMLCanvasElement>();
@@ -33,51 +34,30 @@ const RACE_SLUG: Record<string, string> = {
   pirate: 'human',
 };
 
-const HULL_SLUG: Record<string, string> = {
-  iskra: 'fighter',
-  klinok: 'frigate',
-  korob: 'trader',
-};
-
 export function shipFile(faction: string, hullId: string): string {
-  const race = RACE_SLUG[faction] ?? 'human';
-  if (hullId === 'monolit') {
-    const capital: Record<string, string> = {
-      human: 'human_carrier',
-      zhargi: 'zhargi_gate',
-      kvissae: 'kvissae_fan',
-      teyori: 'teyori_ark',
-      vireks: 'vireks_mother',
-      omnir: 'omnir_hivemaw',
-    };
-    return capital[race] ?? `${race}_cruiser`;
-  }
-  if (hullId === 'oplot') {
-    if (race === 'zhargi') return 'zhargi_battleship';
-    if (race === 'omnir') return 'omnir_battleship';
-    return `${race}_cruiser`;
-  }
-  return `${race}_${HULL_SLUG[hullId] ?? 'fighter'}`;
+  return v10ShipId(faction, hullId);
 }
 
 export function hullScale(hullId: string): number {
-  if (hullId === 'klinok') return 1.45;
-  if (hullId === 'korob') return 1.75;
-  if (hullId === 'oplot') return 2.5;
-  if (hullId === 'monolit') return 3.4;
+  if (hullId === 'klinok') return 1.5;
+  if (hullId === 'korob') return 1.9;
+  if (hullId === 'zhargi_cruiser') return 2.35;
+  if (hullId === 'oplot') return 2.7;
+  if (hullId === 'omnir_carrier') return 3.2;
+  if (hullId === 'monolit') return 3.8;
   return 1;
 }
 
 export function shipImage(faction: string, hullId: string): HTMLImageElement {
   const file = shipFile(faction, hullId);
   const low = getQuality().name === 'low';
-  return loadImage(low ? `ships/192/${file}.webp` : `ships/${file}.webp`);
+  return loadImage(low ? `ships_v10/ships/${file}/${file}_192.webp` : `ships_v10/ships/${file}/${file}_512.webp`);
 }
 
 export function glowImage(faction: string, hullId: string): HTMLImageElement {
   const file = shipFile(faction, hullId);
   const low = getQuality().name === 'low';
-  return loadImage(low ? `ships/192/${file}_glow.webp` : `ships/${file}_glow.webp`);
+  return loadImage(low ? `ships_v10/ships/${file}/${file}_glow_192.webp` : `ships_v10/ships/${file}/${file}_glow_512.webp`);
 }
 
 const FACES: Record<string, string[]> = {
@@ -140,18 +120,18 @@ export function splashImage(): HTMLImageElement {
 }
 
 const GOOD_ICON: Record<string, string> = {
-  ore: 'minerals',
-  alloy: 'alloys',
-  fuel: 'fuel',
-  food: 'food',
-  meds: 'medicine',
-  plates: 'tech_parts',
-  cells: 'weapons_crate',
-  pearl: 'luxury',
-  water: 'crystals',
-  data: 'artifacts',
-  drones: 'repair_drone',
-  iso: 'crystals',
+  fe: 'minerals',
+  ni: 'alloys',
+  ti: 'alloys',
+  cu: 'tech_parts',
+  al: 'minerals',
+  w: 'weapons_crate',
+  pt: 'luxury',
+  rare: 'artifacts',
+  he3: 'fuel',
+  deuterium: 'fuel',
+  crystals: 'crystals',
+  biomass: 'food',
 };
 
 const MOD_ICON: Record<string, string> = {
@@ -243,8 +223,9 @@ export function preloadArt(): void {
   menuNebula();
   menuPlanet();
   splashImage();
+  const low = getQuality().name === 'low';
+  for (const path of assetPaths(low)) loadImage(`ships_v10/${path}`);
   for (const race of ['human', 'zhargi', 'kvissae', 'taeyori', 'virex', 'omnir']) {
-    for (const hull of ['iskra', 'klinok', 'korob', 'oplot', 'monolit']) shipImage(race, hull);
     portraitImage(race, 0);
     portraitImage(race, 1);
   }

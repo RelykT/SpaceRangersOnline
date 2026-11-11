@@ -46,7 +46,9 @@ describe('генерация', () => {
     expect(w.systems.some((s) => s.owner === 'omnir')).toBe(true);
     expect(HULLS.length).toBeGreaterThanOrEqual(5);
     expect(MODULES.length).toBeGreaterThanOrEqual(25);
-    expect(GOODS.length).toBeGreaterThanOrEqual(12);
+    expect(GOODS.map((g) => g.id)).toEqual(['fe', 'ni', 'ti', 'cu', 'al', 'w', 'pt', 'rare', 'he3', 'deuterium', 'crystals', 'biomass']);
+    expect(HULLS.some((h) => h.id === 'zhargi_cruiser')).toBe(true);
+    expect(HULLS.some((h) => h.id === 'omnir_carrier')).toBe(true);
   });
 });
 
@@ -54,19 +56,19 @@ describe('экономика', () => {
   it('залповый слив роняет цену', () => {
     const w = createWorld(3, 'Тест');
     const st = w.stations.find((s) => s.id === w.player.dockedAt)!;
-    const before = stationPrice(st, 'ore', w.events, false);
-    w.player.cargo.ore = 500;
-    step(w, [{ t: 'sell', goodId: 'ore', qty: 400 }]);
-    const after = stationPrice(st, 'ore', w.events, false);
+    const before = stationPrice(st, 'fe', w.events, false);
+    w.player.cargo.fe = 500;
+    step(w, [{ t: 'sell', goodId: 'fe', qty: 400 }]);
+    const after = stationPrice(st, 'fe', w.events, false);
     expect(after).toBeLessThan(before * 0.85);
-    expect(st.market.ore!.stock).toBeGreaterThan(400);
+    expect(st.market.fe!.stock).toBeGreaterThan(400);
   });
 
   it('запасы живых рынков меняются сами', () => {
     const w = createWorld(5, 'Тест');
-    const before = w.stations.reduce((s, st) => s + st.market.food!.stock, 0);
+    const before = w.stations.reduce((s, st) => s + st.market.fe!.stock, 0);
     tick(w, 200);
-    const after = w.stations.reduce((s, st) => s + st.market.food!.stock, 0);
+    const after = w.stations.reduce((s, st) => s + st.market.fe!.stock, 0);
     expect(after).not.toBeCloseTo(before, 3);
   });
 });
@@ -133,6 +135,22 @@ describe('бой и прыжок', () => {
     const dest = blocked.systems.find((s) => s.id === blocked.player.systemId)!.links[0]!;
     step(blocked, [{ t: 'jump', systemId: dest }]);
     expect(blocked.player.jump).toBeNull();
+  });
+
+  it('сродство Зхаргов усиливает рельсу, броня затягивается', () => {
+    const ship = freshShip('iskra', ['rels', null, 'veil', 'poryv', 'plate', 'zapas', null]);
+    const plain = computeFit(ship);
+    const zh = computeFit(ship, { race: 'zhargi' });
+    expect(zh.weapons[0]!.dps).toBeCloseTo(plain.weapons[0]!.dps * 1.1);
+    expect(zh.armorRegen).toBeGreaterThan(plain.armorRegen);
+    expect(zh.maxShield).toBeLessThan(plain.maxShield);
+  });
+
+  it('Омнир копит сопротивление к типу, которым его бьют', () => {
+    const ship = freshShip('iskra', STARTER_FIT);
+    const fit = computeFit(ship);
+    applyDamage(ship, fit, 40, 'thermal', true);
+    expect(ship.adapt?.thermal ?? 0).toBeGreaterThan(0.04);
   });
 
   it('после сотен тиков нет NaN', () => {
