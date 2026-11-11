@@ -28,6 +28,8 @@ import { HULL_GATES, HULL_RANK, HULL_TRACK, RANKS, TRACK_BY_ID, WEAPON_GROUP, ca
 import { generateMap, syncOrbits } from './galaxy';
 import { jumpDuration, separateBodies, updateMotion } from './motion';
 import { dist, findBody, findPath, isNeighbor, planetById, pilotsInSystem, stationById, stationTech, systemById } from './query';
+import { bearsOn, noseBearing } from '../render/rigmath';
+import { socketSide } from '../render/v10map';
 import { clamp, strHash, unit } from './rng';
 import type { Body, CaptainOrigin, Command, DamageType, FactionId, GalaxySettings, GameEvent, Mission, Pilot, Player, PlayableRace, SkillId, StarSystem, World } from './types';
 import { LIVING_FACTIONS, SIM_DT } from './types';
@@ -1253,9 +1255,14 @@ function shoot(world: World, attacker: Body, target: Body): void {
   const distance = dist(attacker.x, attacker.y, target.x, target.y);
   const trans = transversal(attacker.x, attacker.y, attacker.vx, attacker.vy, target.x, target.y, target.vx, target.vy);
   const sig = tFit.sig * ewT.painter;
+  const bearing = noseBearing(attacker.x, attacker.y, attacker.vx, attacker.vy, target.x, target.y);
+  let gun = 0;
   for (const weapon of fit.weapons) {
+    const side = socketSide(attacker.faction, attacker.ship.hullId, gun);
+    gun += 1;
     if (!weapon.online) continue;
     if ((attacker.ship.cycles[weapon.index] ?? 0) > 0) continue;
+    if (!bearsOn(bearing, side)) continue;
     if (attacker.ship.cap < weapon.cap) continue;
     attacker.ship.cap -= weapon.cap;
     attacker.ship.cycles[weapon.index] = weapon.cycle;

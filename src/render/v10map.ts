@@ -139,6 +139,10 @@ export function turretKnown(race: string, type: string): boolean {
   return !!manifest.turret_sets[race]?.[type];
 }
 
+export function socketSide(faction: string, hullId: string, gunIndex: number): string {
+  return shipDef(faction, hullId)?.sockets[gunIndex]?.side ?? 'center';
+}
+
 export function assetPaths(low: boolean): string[] {
   const out: string[] = [];
   for (const ship of manifest.ships) {

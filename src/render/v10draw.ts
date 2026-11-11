@@ -1,7 +1,7 @@
 import { MODULE_BY_ID } from '../sim/content';
 import { loadImage, ready } from './art';
 import { getQuality } from './quality';
-import { alphaAt, clampArc, loopT, rot, wave } from './rigmath';
+import { alphaAt, bearsOn, loopT, rot, wave } from './rigmath';
 import { LOOP_S, artRace, shipDef, turretFile, turretKnown, type ChainPart, type ShipDef, type SocketDef, type SpritePart } from './v10map';
 
 const FAMILY: Record<string, string> = {
@@ -171,9 +171,8 @@ function drawTurret(
   hot: boolean,
 ): void {
   const at = socketPos(sk, d, xf);
-  const [arcMin, arcMax] = sk.arc_deg;
-  const localAim = aim == null ? sk.rest_angle_deg : clampArc(aim - at.extra, arcMin, arcMax);
-  const ang = localAim + at.extra;
+  const tracking = aim != null && bearsOn(aim, sk.side);
+  const ang = tracking ? aim : sk.rest_angle_deg + at.extra;
   const file = turretFile(ship.race, type, low);
   if (!file) return;
   const img = loadImage(`ships_v10/${file}`);

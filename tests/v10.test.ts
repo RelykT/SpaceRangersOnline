@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clampArc, wave } from '../src/render/rigmath';
+import { bearsOn, gameplayArc, noseBearing, wave } from '../src/render/rigmath';
 import { v10ShipId } from '../src/render/v10map';
 
 describe('риг v10', () => {
@@ -12,10 +12,16 @@ describe('риг v10', () => {
     expect(bob[1]).toBeCloseTo(0.02);
   });
 
-  it('сектор турели не пускает ствол за спину в покое', () => {
-    expect(clampArc(180, -170, 30)).toBe(-170);
-    expect(clampArc(-10, -170, 30)).toBe(-10);
-    expect(clampArc(200, -30, 170)).toBe(170);
+  it('игровой сектор уже манифеста: борт не смотрит назад', () => {
+    expect(gameplayArc('right')).toEqual([-30, 110]);
+    expect(gameplayArc('left')).toEqual([-110, 30]);
+    expect(gameplayArc('center')).toEqual([-120, 120]);
+    expect(bearsOn(20, 'right')).toBe(true);
+    expect(bearsOn(150, 'right')).toBe(false);
+    expect(bearsOn(-90, 'left')).toBe(true);
+    expect(bearsOn(140, 'center')).toBe(false);
+    expect(noseBearing(0, 0, 1, 0, 10, 0)).toBeCloseTo(0);
+    expect(noseBearing(0, 0, 1, 0, 0, 10)).toBeCloseTo(90);
   });
 
   it('корпуса народов смотрят на новые спрайты, у Омнир грузовоз — носитель', () => {

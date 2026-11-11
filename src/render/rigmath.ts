@@ -34,6 +34,25 @@ export function wrapDeg(deg: number): number {
   return d;
 }
 
+/** Gameplay traverse. Side mounts cannot look aft; the manifest arcs are wider than this. */
+export function gameplayArc(side: string): [number, number] {
+  if (side === 'left') return [-110, 30];
+  if (side === 'right') return [-30, 110];
+  return [-120, 120];
+}
+
+export function bearsOn(deg: number, side: string): boolean {
+  const [min, max] = gameplayArc(side);
+  const d = wrapDeg(deg);
+  return d >= min && d <= max;
+}
+
+export function noseBearing(ax: number, ay: number, avx: number, avy: number, tx: number, ty: number): number {
+  const heading = Math.atan2(avy, avx);
+  const to = Math.atan2(ty - ay, tx - ax);
+  return wrapDeg(((to - heading) * 180) / Math.PI);
+}
+
 export function clampArc(deg: number, min: number, max: number): number {
   const d = wrapDeg(deg);
   if (d >= min && d <= max) return d;
