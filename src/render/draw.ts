@@ -467,6 +467,7 @@ export function drawSystem(
       thrust: ship.thrust,
       boost: ship.boost,
       weapons: ship.modules,
+      hot: muzzleHot(world, ship.id),
       aimX: aim?.x,
       aimY: aim?.y,
       ripple: hit.ripple,
@@ -499,6 +500,19 @@ export function drawSystem(
   if (newest > seenPing) seenPing = newest;
   paintBolts(ctx, cam, world.time);
   paintParticles(ctx, cam);
+}
+
+function muzzleHot(world: World, id: string): boolean[] {
+  const ship = id === 'player' ? world.player.ship : world.pilots.find((p) => p.id === id)?.ship;
+  if (!ship) return [];
+  const hot: boolean[] = [];
+  for (let i = 0; i < ship.modules.length; i++) {
+    const mid = ship.modules[i];
+    const weapon = mid ? MODULE_BY_ID[mid]?.weapon : undefined;
+    if (!weapon) continue;
+    hot.push((ship.cycles[i] ?? 0) > weapon.cycle * 0.78);
+  }
+  return hot;
 }
 
 function aimScreen(world: World, cam: Camera, ship: ShipSample): { x: number; y: number } | null {

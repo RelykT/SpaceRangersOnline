@@ -50,6 +50,8 @@ export interface Craft {
   /** Screen-space aim point. Turrets traverse inside their arc. */
   aimX?: number;
   aimY?: number;
+  /** Fitted guns that are currently firing, same order as weapon modules. */
+  hot?: boolean[];
   /** 0..1, set only on a fresh shield hit. */
   ripple?: number;
   /** World angle of the incoming shot, radians. */
@@ -110,15 +112,6 @@ export function drawCraft(ctx: CanvasRenderingContext2D, craft: Craft): void {
   const bank = bankOf(craft.id, craft.heading);
   const spin = craft.heading + Math.PI / 2 + bank;
   const q = getQuality();
-  ctx.save();
-  ctx.translate(craft.x + 5, craft.y + 7);
-  ctx.rotate(spin);
-  ctx.globalAlpha = 0.28;
-  ctx.fillStyle = '#000';
-  ctx.beginPath();
-  ctx.ellipse(0, 0, size * 0.28, size * 0.36, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
   const pad = size * 0.55;
   const side = Math.ceil(size + pad * 2);
   const g = shipSheet(side);
@@ -134,6 +127,7 @@ export function drawCraft(ctx: CanvasRenderingContext2D, craft: Craft): void {
       combat: craft.combat,
       weapons: craft.weapons,
       aimDeg,
+      hot: craft.hot,
     });
     if (painted && q.glow) paintHullLight(g, craft, size, spin);
   }

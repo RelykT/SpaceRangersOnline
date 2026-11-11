@@ -34,6 +34,8 @@ export interface ShipPaint {
   weapons?: (string | null)[];
   /** Nose-relative aim in degrees. Omitted: turrets rest outward. */
   aimDeg?: number | null;
+  /** Parallel to fitted guns: true while that socket is in the muzzle flash. */
+  hot?: boolean[];
 }
 
 interface Xf {
@@ -166,6 +168,7 @@ function drawTurret(
   xf: Map<string, Xf>,
   aim: number | null,
   type: string,
+  hot: boolean,
 ): void {
   const at = socketPos(sk, d, xf);
   const [arcMin, arcMax] = sk.arc_deg;
@@ -174,36 +177,20 @@ function drawTurret(
   const file = turretFile(ship.race, type, low);
   if (!file) return;
   const img = loadImage(`ships_v10/${file}`);
-  const side = Math.max(4, sk.turret_draw_size * d);
-  const halo = ship.turret_halo;
-  if (!low) {
-    ctx.save();
-    ctx.globalAlpha = 0.28;
-    ctx.fillStyle = '#000';
-    ctx.beginPath();
-    ctx.ellipse(at.x + side * 0.06, at.y + side * 0.09, side * 0.28, side * 0.2, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-  if (halo && !low) {
-    ctx.save();
-    ctx.globalAlpha = halo.alpha;
-    ctx.fillStyle = `rgb(${halo.color[0]},${halo.color[1]},${halo.color[2]})`;
-    ctx.beginPath();
-    ctx.arc(at.x, at.y, side * (halo.kind === 'outline' ? 0.46 : 0.38), 0, Math.PI * 2);
-    ctx.fill();
-    if (halo.kind === 'outline') {
-      ctx.globalAlpha = Math.min(1, halo.alpha + 0.25);
-      ctx.strokeStyle = ctx.fillStyle;
-      ctx.lineWidth = Math.max(1, side * 0.08);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
   if (!ready(img)) return;
+  const side = Math.max(4, sk.turret_draw_size * d);
   ctx.save();
   ctx.translate(at.x, at.y);
   ctx.rotate((ang * Math.PI) / 180);
+  if (hot && !low) {
+    const halo = ship.turret_halo;
+    ctx.save();
+    ctx.filter = 'blur(1.4px)';
+    ctx.globalAlpha = 0.22;
+    if (halo) ctx.globalCompositeOperation = 'lighter';
+    ctx.drawImage(img, -side / 2, -side / 2, side, side);
+    ctx.restore();
+  }
   ctx.drawImage(img, -side / 2, -side / 2, side, side);
   ctx.restore();
 }
@@ -216,12 +203,13 @@ function drawTurrets(
   xf: Map<string, Xf>,
   aim: number | null,
   guns: string[],
+  hot: boolean[],
   parentHull: boolean,
 ): void {
   ship.sockets.forEach((sk, index) => {
     const onHull = sk.parent === 'hull';
     if (onHull !== parentHull) return;
-    drawTurret(ctx, ship, sk, d, low, xf, aim, fittedType(ship.race, sk, guns[index] ?? null));
+    drawTurret(ctx, ship, sk, d, low, xf, aim, fittedType(ship.race, sk, guns[index] ?? null), !!hot[index]);
   });
 }
 
@@ -293,12 +281,13 @@ export function paintShip(ctx: CanvasRenderingContext2D, paint: ShipPaint): bool
     if (part.kind === 'sprite') xf.set(part.name, partState(part, t, d));
   }
   const guns = gunIds(paint.weapons);
+  const hot = paint.hot ?? [];
   const aim = paint.aimDeg ?? null;
   drawParts(ctx, ship, 'under', t, d, low, xf);
   ctx.drawImage(base, -d / 2, -d / 2, d, d);
-  drawTurrets(ctx, ship, d, low, xf, aim, guns, true);
+  drawTurrets(ctx, ship, d, low, xf, aim, guns, hot, true);
   drawParts(ctx, ship, 'over', t, d, low, xf);
-  drawTurrets(ctx, ship, d, low, xf, aim, guns, false);
+  drawTurrets(ctx, ship, d, low, xf, aim, guns, hot, false);
   if (getQuality().glow) {
     paintGlow(ctx, ship, d, low, t);
     if (!low) {
