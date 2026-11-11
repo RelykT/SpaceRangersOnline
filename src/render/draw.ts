@@ -269,15 +269,16 @@ export function drawMenu(ctx: CanvasRenderingContext2D, w: number, h: number, ti
       flash: false,
       lightX: -30,
       lightY: -20,
-      thrust: 0.9,
-      boost: hull === 'iskra',
+      thrust: 0.55,
+      boost: false,
     });
   };
-  fly(40, 70, h * 0.26, 'iskra', 'human', 108);
-  fly(320, 48, h * 0.62, 'oplot', 'zhargi', 168);
-  fly(560, 58, h * 0.16, 'korob', 'kvissae', 140);
-  fly(800, 36, h * 0.48, 'monolit', 'taeyori', 230);
-  fly(1040, 64, h * 0.78, 'klinok', 'omnir', 120);
+  const menuSize = (hull: string) => Math.round(72 * hullScale(hull));
+  fly(40, 70, h * 0.26, 'iskra', 'human', menuSize('iskra'));
+  fly(320, 48, h * 0.62, 'oplot', 'zhargi', menuSize('oplot'));
+  fly(560, 58, h * 0.16, 'korob', 'kvissae', menuSize('korob'));
+  fly(800, 36, h * 0.48, 'monolit', 'taeyori', menuSize('monolit'));
+  fly(1040, 64, h * 0.78, 'klinok', 'omnir', menuSize('klinok'));
   paintExhaust(ctx);
 }
 
