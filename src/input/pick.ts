@@ -61,6 +61,13 @@ export function screenToWorld(cam: Camera, sx: number, sy: number): { x: number;
   };
 }
 
+/** Largest zoom that still keeps a pair of world points inside the view. */
+export function zoomToFrame(viewW: number, viewH: number, dx: number, dy: number, margin = 96, cap = 1.6): number {
+  const zx = (viewW - margin * 2) / Math.max(48, Math.abs(dx));
+  const zy = (viewH - margin * 2) / (Math.max(48, Math.abs(dy)) * Y_SQUASH);
+  return Math.max(0.08, Math.min(cap, zx, zy));
+}
+
 export function hitRadiusPx(spriteRadius: number, zoom: number, minRadiusPx: number): number {
   const visual = Math.abs(spriteRadius * zoom);
   return Math.max(minRadiusPx, visual);

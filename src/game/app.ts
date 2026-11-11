@@ -4,6 +4,7 @@ import { GESTURE, classifyGesture, dragThreshold, type PointerKind } from '../in
 import {
   HIT_PX,
   screenToWorld,
+  zoomToFrame,
   worldPointerAllowed,
   worldToScreen,
   pickAt,
@@ -214,6 +215,20 @@ export function startGame(root: HTMLElement): void {
     const b = newer.get(id) ?? { x, y };
     if (!a || Math.hypot(a.x - b.x, a.y - b.y) > 900) return b;
     return { x: a.x + (b.x - a.x) * alpha, y: a.y + (b.y - a.y) * alpha };
+  }
+
+  function combatFrame(current: World | null): { me: { x: number; y: number }; foe: { x: number; y: number } | null; focus: { x: number; y: number } } | null {
+    if (!current || current.player.combatTimer <= 0 || current.player.dockedAt) return null;
+    const me = sample('player', current.player.x, current.player.y);
+    const chosen = current.player.locked.includes(current.player.selectedId ?? '')
+      ? current.player.selectedId
+      : current.player.locked[0] ?? null;
+    const foe = chosen
+      ? current.pilots.find((p) => p.id === chosen && !p.destroyed && !p.dockedAt && p.systemId === current.player.systemId)
+      : undefined;
+    if (!foe) return { me, foe: null, focus: me };
+    const them = sample(foe.id, foe.x, foe.y);
+    return { me, foe: them, focus: { x: (me.x + them.x) / 2, y: (me.y + them.y) / 2 } };
   }
 
   function localPickables(): Pickable[] {
@@ -1170,9 +1185,18 @@ export function startGame(root: HTMLElement): void {
       }
     } else acc = 0;
     resize();
+    const fight = combatFrame(world);
+    if (fight?.foe && mode === 'space') {
+      const fit = zoomToFrame(viewW, viewH, fight.foe.x - fight.me.x, fight.foe.y - fight.me.y);
+      if (spaceZoom > fit) spaceZoom = fit;
+    }
     if (mode === 'map') easeZoom(mapCam, mapZoom, dt);
     else easeZoom(spaceCam, spaceZoom, dt);
-    if (world && spaceCam.follow && mode === 'space') {
+    if (fight && mode === 'space') {
+      const k = 1 - Math.exp(-4 * Math.max(dt, 0.016));
+      spaceCam.x += (fight.focus.x - spaceCam.x) * k;
+      spaceCam.y += (fight.focus.y - spaceCam.y) * k;
+    } else if (world && spaceCam.follow && mode === 'space') {
       const at = sample('player', world.player.x, world.player.y);
       const k = 1 - Math.exp(-4 * Math.max(dt, 0.016));
       spaceCam.x += (at.x - spaceCam.x) * k;

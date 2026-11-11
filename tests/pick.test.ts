@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { GESTURE, classifyGesture } from '../src/input/gestures';
-import { HIT_PX, hitRadiusPx, pickAt, worldPointerAllowed, worldToScreen, type Camera, type Pickable, type Rect } from '../src/input/pick';
+import { HIT_PX, hitRadiusPx, pickAt, worldPointerAllowed, worldToScreen, zoomToFrame, type Camera, type Pickable, type Rect } from '../src/input/pick';
 
 const cam: Camera = { x: 0, y: 0, zoom: 0.2, viewW: 800, viewH: 600 };
 
@@ -79,5 +79,12 @@ describe('жест: касание, перетаскивание, долгое �
 
   it('два пальца всегда щипок, а не приказ кораблю', () => {
     expect(classifyGesture({ pointerType: 'touch', movedPx: 2, heldMs: 40, released: false, pointers: 2 })).toBe('pinch');
+  });
+
+  it('зум боя не выталкивает пару за край кадра', () => {
+    const wide = zoomToFrame(1280, 720, 2000, 0, 96, 1.6);
+    expect(wide).toBeLessThan(0.6);
+    expect(wide * 2000).toBeLessThan(1280 - 96);
+    expect(zoomToFrame(1280, 720, 40, 40, 96, 1.6)).toBe(1.6);
   });
 });

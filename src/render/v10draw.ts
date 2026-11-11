@@ -49,6 +49,30 @@ interface Xf {
 }
 
 const tinted = new Map<string, HTMLCanvasElement>();
+const dyed = new Map<string, HTMLCanvasElement>();
+
+const TURRET_RIM: Record<string, string> = {
+  human: '#9fd4ff',
+  zhargi: '#ff8a3d',
+};
+
+function dye(img: HTMLImageElement, color: string): HTMLCanvasElement | null {
+  if (!ready(img)) return null;
+  const key = `${img.src}|${color}`;
+  const hit = dyed.get(key);
+  if (hit) return hit;
+  const c = document.createElement('canvas');
+  c.width = img.naturalWidth;
+  c.height = img.naturalHeight;
+  const g = c.getContext('2d');
+  if (!g) return null;
+  g.drawImage(img, 0, 0);
+  g.globalCompositeOperation = 'source-in';
+  g.fillStyle = color;
+  g.fillRect(0, 0, c.width, c.height);
+  dyed.set(key, c);
+  return c;
+}
 
 function tintMask(img: HTMLImageElement, color: [number, number, number]): HTMLCanvasElement | null {
   if (!ready(img)) return null;
@@ -183,6 +207,26 @@ function drawTurret(
   ctx.save();
   ctx.translate(at.x, at.y);
   ctx.rotate((ang * Math.PI) / 180);
+  const rim = TURRET_RIM[ship.race];
+  if (rim) {
+    const ink = dye(img, '#10141c');
+    const glow = dye(img, rim);
+    if (ink) {
+      ctx.save();
+      ctx.globalAlpha = 0.3;
+      for (const [ox, oy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+        ctx.drawImage(ink, -side / 2 + ox, -side / 2 + oy, side, side);
+      }
+      ctx.restore();
+    }
+    if (glow) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = 0.42;
+      ctx.drawImage(glow, -side / 2 - 1, -side / 2 - 1, side, side);
+      ctx.restore();
+    }
+  }
   if (hot && !low) {
     const halo = ship.turret_halo;
     ctx.save();
