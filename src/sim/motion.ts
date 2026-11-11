@@ -1,3 +1,4 @@
+import { crowdRadius } from './content';
 import { clamp } from './rng';
 import { dist, systemById } from './query';
 import type { Body, NavMode, World } from './types';
@@ -145,8 +146,9 @@ export function separateBodies(list: Body[]): void {
       const dx = b.x - a.x;
       const dy = b.y - a.y;
       const d = Math.hypot(dx, dy);
-      if (d >= 42 || d < 0.001) continue;
-      const overlap = (42 - d) / 2;
+      const need = crowdRadius(a.ship.hullId) + crowdRadius(b.ship.hullId);
+      if (d >= need || d < 0.001) continue;
+      const overlap = (need - d) / 2;
       const nx = dx / d;
       const ny = dy / d;
       push.get(a.id)!.x -= nx * overlap;

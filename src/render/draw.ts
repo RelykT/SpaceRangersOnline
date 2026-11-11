@@ -445,7 +445,7 @@ export function drawSystem(
     const color = ship.id === 'player' ? '#9fd4ff' : FACTION_COLOR[ship.faction];
     const zoomBoost = Math.max(0.75, Math.min(2.2, cam.zoom / 0.5));
     const base = qual.name === 'low' ? 56 : qual.name === 'high' ? 84 : 72;
-    const size = base * hullScale(ship.hullId) * zoomBoost * (ship.id === 'player' ? 1.06 : 1);
+    const size = base * hullScale(ship.hullId) * zoomBoost;
     const star = worldToScreen(cam, 0, 0);
     const aim = aimScreen(world, cam, ship);
     const hit = shieldHit(world, ship);

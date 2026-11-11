@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { hullBulk, crowdRadius } from '../src/sim/content';
 import { bearsOn, gameplayArc, noseBearing, wave } from '../src/render/rigmath';
 import { v10ShipId } from '../src/render/v10map';
 
@@ -22,6 +23,12 @@ describe('риг v10', () => {
     expect(bearsOn(140, 'center')).toBe(false);
     expect(noseBearing(0, 0, 1, 0, 10, 0)).toBeCloseTo(0);
     expect(noseBearing(0, 0, 1, 0, 0, 10)).toBeCloseTo(90);
+  });
+
+  it('капитал не больше 3.8 истребителя, и корпуса расходятся по размеру', () => {
+    expect(hullBulk('monolit')).toBeLessThanOrEqual(3.8);
+    expect(hullBulk('omnir_carrier')).toBeLessThanOrEqual(3.8);
+    expect(crowdRadius('iskra') + crowdRadius('monolit')).toBeGreaterThan(200);
   });
 
   it('корпуса народов смотрят на новые спрайты, у Омнир грузовоз — носитель', () => {

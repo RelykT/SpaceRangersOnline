@@ -1,3 +1,4 @@
+import { hullBulk } from '../sim/content';
 import { getQuality } from './quality';
 import { assetPaths, v10ShipId } from './v10map';
 
@@ -39,13 +40,7 @@ export function shipFile(faction: string, hullId: string): string {
 }
 
 export function hullScale(hullId: string): number {
-  if (hullId === 'klinok') return 1.5;
-  if (hullId === 'korob') return 1.9;
-  if (hullId === 'zhargi_cruiser') return 2.35;
-  if (hullId === 'oplot') return 2.7;
-  if (hullId === 'omnir_carrier') return 3.2;
-  if (hullId === 'monolit') return 3.8;
-  return 1;
+  return hullBulk(hullId);
 }
 
 export function shipImage(faction: string, hullId: string): HTMLImageElement {

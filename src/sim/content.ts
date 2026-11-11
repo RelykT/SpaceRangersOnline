@@ -400,6 +400,22 @@ export const HULLS: HullDef[] = [
 
 export const HULL_BY_ID: Record<string, HullDef> = Object.fromEntries(HULLS.map((h) => [h.id, h]));
 
+/** On-screen class scale. Capitals stay at most 3.25× a fighter. */
+export function hullBulk(hullId: string): number {
+  if (hullId === 'klinok') return 1.45;
+  if (hullId === 'korob') return 1.75;
+  if (hullId === 'zhargi_cruiser') return 2.15;
+  if (hullId === 'oplot') return 2.4;
+  if (hullId === 'omnir_carrier') return 2.8;
+  if (hullId === 'monolit') return 3.25;
+  return 1;
+}
+
+/** World-unit spacing so drawn hulls do not sit on top of each other. */
+export function crowdRadius(hullId: string): number {
+  return 78 * hullBulk(hullId);
+}
+
 function mod(p: ModuleDef): ModuleDef {
   return p;
 }

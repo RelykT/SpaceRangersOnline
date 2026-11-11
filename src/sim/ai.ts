@@ -1,4 +1,4 @@
-import { FACTION_NAME, GOOD_IDS, HULL_BY_ID, MODULE_BY_ID, slotLayout } from './content';
+import { FACTION_NAME, GOOD_IDS, HULL_BY_ID, MODULE_BY_ID, crowdRadius, slotLayout } from './content';
 import { buyGoods, roughCargoValue, sellGoods, stationPrice } from './economy';
 import { canFitModules, computeFit, freshShip, hpFraction, hullOf } from './fitting';
 import { jumpDuration } from './motion';
@@ -818,11 +818,13 @@ function execute(world: World, pilot: Pilot): void {
     }
     const fit = computeFit(pilot.ship);
     const opt = fit.weapons.find((w) => w.online)?.optimal ?? 480;
+    const gap = crowdRadius(pilot.ship.hullId) + crowdRadius(tgt.ship.hullId);
+    const stagger = (strHash(pilot.id) % 5) * 48;
     pilot.nav = {
       mode: 'orbit',
       x: tgt.x,
       y: tgt.y,
-      range: clamp(opt * 0.9, 180, 1500),
+      range: clamp(Math.max(opt * 0.85, gap + stagger), 240, 1700),
       followId: tgt.id,
     };
   }
