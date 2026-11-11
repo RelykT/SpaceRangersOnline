@@ -52,6 +52,7 @@ export interface Craft {
   aimY?: number;
   /** Fitted guns that are currently firing, same order as weapon modules. */
   hot?: boolean[];
+  markSocket?: number;
   /** 0..1, set only on a fresh shield hit. */
   ripple?: number;
   /** World angle of the incoming shot, radians. */
@@ -128,6 +129,7 @@ export function drawCraft(ctx: CanvasRenderingContext2D, craft: Craft): void {
       weapons: craft.weapons,
       aimDeg,
       hot: craft.hot,
+      markSocket: craft.markSocket,
     });
     if (painted && q.glow) paintHullLight(g, craft, size, spin);
   }

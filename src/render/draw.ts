@@ -281,22 +281,30 @@ export function drawMenu(ctx: CanvasRenderingContext2D, w: number, h: number, ti
   paintExhaust(ctx);
 }
 
-export function drawHangar(ctx: CanvasRenderingContext2D, w: number, h: number, owner: FactionId, time: number, hullId = 'iskra', modules?: (string | null)[]): void {
+export function drawHangar(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  owner: FactionId,
+  time: number,
+  hullId = 'iskra',
+  modules?: (string | null)[],
+  selectedSlot: number | null = null,
+  highSlots = 0,
+): void {
   const plate = stationImage(owner);
   if (ready(plate)) cover(ctx, plate, w, h, 0, 0);
   else {
     ctx.fillStyle = '#121a28';
     ctx.fillRect(0, 0, w, h);
   }
-  const size = Math.min(h * 0.96, w * 0.62) * (0.55 + 0.45 * (hullScale(hullId) / 3.8));
-  ctx.fillStyle = 'rgba(0,0,0,.55)';
-  ctx.beginPath();
-  ctx.ellipse(w * 0.5, h * 0.56, size * 0.55, size * 0.38, 0, 0, Math.PI * 2);
-  ctx.fill();
+  const bulk = 0.86 + 0.14 * (hullScale(hullId) / 3.25);
+  const size = Math.min(h * 0.98, w * 0.78) * bulk;
+  const mark = selectedSlot != null && selectedSlot >= 0 && selectedSlot < highSlots ? selectedSlot : -1;
   drawCraft(ctx, {
     id: `hangar-${owner}`,
     x: w * 0.5,
-    y: h * 0.56,
+    y: h * 0.5,
     heading: -Math.PI / 2 + Math.sin(time * 0.25) * 0.04,
     faction: owner === 'free' || owner === 'pirate' ? 'human' : owner,
     hullId,
@@ -307,9 +315,10 @@ export function drawHangar(ctx: CanvasRenderingContext2D, w: number, h: number, 
     shieldFrac: 1,
     flash: false,
     weapons: modules,
+    markSocket: mark,
     lightX: 0,
     lightY: -1,
-    thrust: 0.15,
+    thrust: 0.08,
     boost: false,
   });
   paintExhaust(ctx);

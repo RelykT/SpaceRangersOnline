@@ -36,6 +36,8 @@ export interface ShipPaint {
   aimDeg?: number | null;
   /** Parallel to fitted guns: true while that socket is in the muzzle flash. */
   hot?: boolean[];
+  /** Hangar: brass ring on this socket index. */
+  markSocket?: number;
 }
 
 interface Xf {
@@ -287,6 +289,20 @@ export function paintShip(ctx: CanvasRenderingContext2D, paint: ShipPaint): bool
   drawTurrets(ctx, ship, d, low, xf, aim, guns, hot, true);
   drawParts(ctx, ship, 'over', t, d, low, xf);
   drawTurrets(ctx, ship, d, low, xf, aim, guns, hot, false);
+  if (paint.markSocket != null && paint.markSocket >= 0) {
+    const sk = ship.sockets[paint.markSocket];
+    if (sk) {
+      const at = socketPos(sk, d, xf);
+      const ring = Math.max(7, sk.turret_draw_size * d * 0.85);
+      ctx.save();
+      ctx.strokeStyle = '#e0b565';
+      ctx.lineWidth = Math.max(1.5, d * 0.01);
+      ctx.beginPath();
+      ctx.arc(at.x, at.y, ring, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
   if (getQuality().glow) {
     paintGlow(ctx, ship, d, low, t);
     if (!low) {

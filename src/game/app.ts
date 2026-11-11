@@ -1126,6 +1126,7 @@ export function startGame(root: HTMLElement): void {
     const playing = mode === 'space' || mode === 'map';
     menuEl.hidden = mode !== 'menu';
     hud.hidden = !playing;
+    overview.hidden = mode === 'menu' || mode === 'splash' || (mode === 'space' && !!world?.player.dockedAt);
     const skip = root.querySelector<HTMLElement>('#splash-skip');
     if (skip) skip.hidden = mode !== 'splash';
     pauseEl.hidden = !pauseOpen;
@@ -1196,7 +1197,7 @@ export function startGame(root: HTMLElement): void {
       const dockId = world.player.dockedAt;
       const owner = world.stations.find((s) => s.id === dockId)?.owner ?? 'free';
       const hctx = hangar.getContext('2d');
-      if (hctx) drawHangar(hctx, hangar.width, hangar.height, owner, now, world.player.ship.hullId, world.player.ship.modules);
+      if (hctx) drawHangar(hctx, hangar.width, hangar.height, owner, now, world.player.ship.hullId, world.player.ship.modules, fitSlot, hullOf(world.player.ship.hullId).high);
     }
     if (portrait) {
       const race = pilotOpen && world?.player.origin ? world.player.origin.race : draft.race;
@@ -1339,7 +1340,7 @@ function stationHtml(world: World, stationId: string, tab: string, fitSlot: numb
     const reps = (Object.keys(FACTION_SHORT) as (keyof typeof FACTION_SHORT)[]).map((id) => `${FACTION_SHORT[id]} ${Math.round(world.player.reputation[id])}`).join(' · ');
     body = `<p>Щит ${Math.round(world.player.ship.shield)} / ${Math.round(fit.maxShield)}</p><p>Броня ${Math.round(world.player.ship.armor)} / ${Math.round(fit.maxArmor)}</p><p>Корпус ${Math.round(world.player.ship.hull)} / ${Math.round(fit.maxHull)}</p><button type="button" class="primary" data-act="repair" ${cost <= 0 ? 'disabled' : ''}>Чинить за ${cost.toLocaleString('ru-RU')}</button><h3>Репутация</h3><p>${reps}</p><p class="sub">Побед: ${world.player.kills}. Склад модулей летит с кораблём.</p>`;
   }
-    return `<canvas id="hangar" width="720" height="280"></canvas><div class="tabs">${tabs}<button type="button" class="primary" data-act="undock">В космос</button></div><p class="sub">${esc(st.name)} · ${esc(FACTION_NAME[st.owner])}</p>${body}`;
+    return `<canvas id="hangar" width="720" height="360"></canvas><div class="tabs">${tabs}<button type="button" class="primary" data-act="undock">В космос</button></div><p class="sub">${esc(st.name)} · ${esc(FACTION_NAME[st.owner])}</p>${body}`;
 }
 
 function catalogHtml(world: World, owner: World['stations'][number]['owner'], tech: number, slot: string, index: number): string {
