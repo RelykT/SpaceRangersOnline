@@ -1,0 +1,80 @@
+{
+ "zhargi_fighter": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/zhargi_fighter/zhargi_fighter_glow_512.webp",
+   "color": [
+    200,
+    120,
+    255
+   ],
+   "alpha": "0.6+0.25*sin(2*pi*t)"
+  },
+  "parts": []
+ },
+ "zhargi_frigate": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/zhargi_frigate/zhargi_frigate_glow_512.webp",
+   "color": [
+    200,
+    120,
+    255
+   ],
+   "alpha": "0.6+0.25*sin(2*pi*t)"
+  },
+  "parts": []
+ },
+ "zhargi_trader": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/zhargi_trader/zhargi_trader_glow_512.webp",
+   "color": [
+    200,
+    120,
+    255
+   ],
+   "alpha": "0.6+0.25*sin(2*pi*t)"
+  },
+  "parts": []
+ },
+ "zhargi_cruiser": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/zhargi_cruiser/zhargi_cruiser_glow_512.webp",
+   "color": [
+    200,
+    120,
+    255
+   ],
+   "alpha": "0.6+0.25*sin(2*pi*t)"
+  },
+  "parts": []
+ },
+ "zhargi_battleship": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/zhargi_battleship/zhargi_battleship_glow_512.webp",
+   "color": [
+    200,
+    120,
+    255
+   ],
+   "alpha": "0.6+0.25*sin(2*pi*t)"
+  },
+  "parts": []
+ },
+ "zhargi_citadel": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/zhargi_citadel/zhargi_citadel_glow_512.webp",
+   "color": [
+    200,
+    120,
+    255
+   ],
+   "alpha": "0.6+0.25*sin(2*pi*t)"
+  },
+  "parts": []
+ }
+}

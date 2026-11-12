@@ -1,0 +1,1635 @@
+{
+ "teyori_fighter": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/teyori_fighter/teyori_fighter_glow_512.webp",
+   "color": [
+    200,
+    140,
+    255
+   ],
+   "alpha": "0.18+0.18*sin(2*pi*t)+0.22*flicker(t)"
+  },
+  "parts": [
+   {
+    "name": "side_lance_R",
+    "kind": "sprite",
+    "file": "ships/teyori_fighter/parts/side_lance_R.webp",
+    "file_192": "ships/teyori_fighter/parts_192/side_lance_R.webp",
+    "size_px": [
+     54,
+     220
+    ],
+    "pivot_px": [
+     29.0,
+     103.0
+    ],
+    "pivot_norm": [
+     0.5321,
+     0.4692
+    ],
+    "anchor_uv": [
+     0.67383,
+     0.48828
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": -1.5,
+     "dx": 0.00244,
+     "dy": 0.00488,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "side_lance_L",
+    "kind": "sprite",
+    "file": "ships/teyori_fighter/parts/side_lance_L.webp",
+    "file_192": "ships/teyori_fighter/parts_192/side_lance_L.webp",
+    "size_px": [
+     55,
+     220
+    ],
+    "pivot_px": [
+     25.5,
+     103.5
+    ],
+    "pivot_norm": [
+     0.4636,
+     0.4705
+    ],
+    "anchor_uv": [
+     0.32617,
+     0.48828
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 1.5,
+     "dx": -0.00244,
+     "dy": 0.00488,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": [
+     "s0"
+    ]
+   },
+   {
+    "name": "float00_L",
+    "kind": "sprite",
+    "file": "ships/teyori_fighter/parts/float00_L.webp",
+    "file_192": "ships/teyori_fighter/parts_192/float00_L.webp",
+    "size_px": [
+     8,
+     23
+    ],
+    "pivot_px": [
+     3.8,
+     11.6
+    ],
+    "pivot_norm": [
+     0.4702,
+     0.5039
+    ],
+    "anchor_uv": [
+     0.41262,
+     0.22967
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 3.0,
+     "dx": -0.00228,
+     "dy": 0.00455,
+     "cycles_per_loop": 1,
+     "phase_rad": 2.418
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float01_R",
+    "kind": "sprite",
+    "file": "ships/teyori_fighter/parts/float01_R.webp",
+    "file_192": "ships/teyori_fighter/parts_192/float01_R.webp",
+    "size_px": [
+     9,
+     22
+    ],
+    "pivot_px": [
+     4.6,
+     11.2
+    ],
+    "pivot_norm": [
+     0.5064,
+     0.4998
+    ],
+    "anchor_uv": [
+     0.588,
+     0.23095
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": -3.0,
+     "dx": 0.00231,
+     "dy": 0.00462,
+     "cycles_per_loop": 1,
+     "phase_rad": 2.467
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float02_L",
+    "kind": "sprite",
+    "file": "ships/teyori_fighter/parts/float02_L.webp",
+    "file_192": "ships/teyori_fighter/parts_192/float02_L.webp",
+    "size_px": [
+     7,
+     15
+    ],
+    "pivot_px": [
+     3.2,
+     7.1
+    ],
+    "pivot_norm": [
+     0.4551,
+     0.4755
+    ],
+    "anchor_uv": [
+     0.40368,
+     0.31764
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 3.0,
+     "dx": -0.00208,
+     "dy": 0.00417,
+     "cycles_per_loop": 1,
+     "phase_rad": 5.752
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float03_R",
+    "kind": "sprite",
+    "file": "ships/teyori_fighter/parts/float03_R.webp",
+    "file_192": "ships/teyori_fighter/parts_192/float03_R.webp",
+    "size_px": [
+     8,
+     16
+    ],
+    "pivot_px": [
+     4.4,
+     8.0
+    ],
+    "pivot_norm": [
+     0.5152,
+     0.4995
+    ],
+    "anchor_uv": [
+     0.59644,
+     0.32323
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": -3.0,
+     "dx": 0.00213,
+     "dy": 0.00425,
+     "cycles_per_loop": 1,
+     "phase_rad": 5.963
+    },
+    "carries_sockets": []
+   }
+  ]
+ },
+ "teyori_frigate": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/teyori_frigate/teyori_frigate_glow_512.webp",
+   "color": [
+    200,
+    140,
+    255
+   ],
+   "alpha": "0.18+0.18*sin(2*pi*t)+0.22*flicker(t)"
+  },
+  "parts": [
+   {
+    "name": "crescent_arm_R",
+    "kind": "sprite",
+    "file": "ships/teyori_frigate/parts/crescent_arm_R.webp",
+    "file_192": "ships/teyori_frigate/parts_192/crescent_arm_R.webp",
+    "size_px": [
+     186,
+     394
+    ],
+    "pivot_px": [
+     23.5,
+     320.0
+    ],
+    "pivot_norm": [
+     0.1263,
+     0.8132
+    ],
+    "anchor_uv": [
+     0.625,
+     0.68359
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": -1.2,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "crescent_arm_L",
+    "kind": "sprite",
+    "file": "ships/teyori_frigate/parts/crescent_arm_L.webp",
+    "file_192": "ships/teyori_frigate/parts_192/crescent_arm_L.webp",
+    "size_px": [
+     187,
+     394
+    ],
+    "pivot_px": [
+     163.0,
+     320.0
+    ],
+    "pivot_norm": [
+     0.8717,
+     0.8132
+    ],
+    "anchor_uv": [
+     0.37402,
+     0.68359
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": 1.2,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float00_R",
+    "kind": "sprite",
+    "file": "ships/teyori_frigate/parts/float00_R.webp",
+    "file_192": "ships/teyori_frigate/parts_192/float00_R.webp",
+    "size_px": [
+     7,
+     16
+    ],
+    "pivot_px": [
+     3.0,
+     8.1
+    ],
+    "pivot_norm": [
+     0.4332,
+     0.5231
+    ],
+    "anchor_uv": [
+     0.56256,
+     0.40841
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": -3.0,
+     "dx": 0.00208,
+     "dy": 0.00416,
+     "cycles_per_loop": 1,
+     "phase_rad": 2.908
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float01_L",
+    "kind": "sprite",
+    "file": "ships/teyori_frigate/parts/float01_L.webp",
+    "file_192": "ships/teyori_frigate/parts_192/float01_L.webp",
+    "size_px": [
+     6,
+     15
+    ],
+    "pivot_px": [
+     3.0,
+     7.6
+    ],
+    "pivot_norm": [
+     0.4609,
+     0.5058
+    ],
+    "anchor_uv": [
+     0.43651,
+     0.40837
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 3.0,
+     "dx": -0.00208,
+     "dy": 0.00415,
+     "cycles_per_loop": 1,
+     "phase_rad": 2.906
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float02_L",
+    "kind": "sprite",
+    "file": "ships/teyori_frigate/parts/float02_L.webp",
+    "file_192": "ships/teyori_frigate/parts_192/float02_L.webp",
+    "size_px": [
+     9,
+     7
+    ],
+    "pivot_px": [
+     4.1,
+     4.1
+    ],
+    "pivot_norm": [
+     0.456,
+     0.5826
+    ],
+    "anchor_uv": [
+     0.30684,
+     0.84195
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 3.0,
+     "dx": -0.00186,
+     "dy": 0.00372,
+     "cycles_per_loop": 1,
+     "phase_rad": 0.484
+    },
+    "carries_sockets": []
+   }
+  ]
+ },
+ "teyori_trader": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/teyori_trader/teyori_trader_glow_512.webp",
+   "color": [
+    200,
+    140,
+    255
+   ],
+   "alpha": "0.18+0.18*sin(2*pi*t)+0.22*flicker(t)"
+  },
+  "parts": [
+   {
+    "name": "ring_upper_R",
+    "kind": "sprite",
+    "file": "ships/teyori_trader/parts/ring_upper_R.webp",
+    "file_192": "ships/teyori_trader/parts_192/ring_upper_R.webp",
+    "size_px": [
+     96,
+     140
+    ],
+    "pivot_px": [
+     52.5,
+     65.0
+    ],
+    "pivot_norm": [
+     0.544,
+     0.4626
+    ],
+    "anchor_uv": [
+     0.74219,
+     0.26367
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": -2.0,
+     "dx": 0.00244,
+     "dy": 0.00488,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": [
+     "s7"
+    ]
+   },
+   {
+    "name": "ring_upper_L",
+    "kind": "sprite",
+    "file": "ships/teyori_trader/parts/ring_upper_L.webp",
+    "file_192": "ships/teyori_trader/parts_192/ring_upper_L.webp",
+    "size_px": [
+     95,
+     140
+    ],
+    "pivot_px": [
+     42.0,
+     64.5
+    ],
+    "pivot_norm": [
+     0.4421,
+     0.4607
+    ],
+    "anchor_uv": [
+     0.25586,
+     0.26367
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 2.0,
+     "dx": -0.00244,
+     "dy": 0.00488,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": [
+     "s6"
+    ]
+   },
+   {
+    "name": "ring_lower_R",
+    "kind": "sprite",
+    "file": "ships/teyori_trader/parts/ring_lower_R.webp",
+    "file_192": "ships/teyori_trader/parts_192/ring_lower_R.webp",
+    "size_px": [
+     108,
+     178
+    ],
+    "pivot_px": [
+     52.5,
+     87.5
+    ],
+    "pivot_norm": [
+     0.4861,
+     0.4916
+    ],
+    "anchor_uv": [
+     0.74219,
+     0.71289
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": -2.0,
+     "dx": 0.00244,
+     "dy": 0.00488,
+     "cycles_per_loop": 1,
+     "phase_rad": 2.1
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "ring_lower_L",
+    "kind": "sprite",
+    "file": "ships/teyori_trader/parts/ring_lower_L.webp",
+    "file_192": "ships/teyori_trader/parts_192/ring_lower_L.webp",
+    "size_px": [
+     108,
+     178
+    ],
+    "pivot_px": [
+     55.0,
+     87.5
+    ],
+    "pivot_norm": [
+     0.5093,
+     0.4916
+    ],
+    "anchor_uv": [
+     0.25586,
+     0.71289
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 2.0,
+     "dx": -0.00244,
+     "dy": 0.00488,
+     "cycles_per_loop": 1,
+     "phase_rad": 2.1
+    },
+    "carries_sockets": [
+     "s2"
+    ]
+   },
+   {
+    "name": "float00_L",
+    "kind": "sprite",
+    "file": "ships/teyori_trader/parts/float00_L.webp",
+    "file_192": "ships/teyori_trader/parts_192/float00_L.webp",
+    "size_px": [
+     12,
+     30
+    ],
+    "pivot_px": [
+     5.9,
+     14.3
+    ],
+    "pivot_norm": [
+     0.4723,
+     0.4766
+    ],
+    "anchor_uv": [
+     0.39141,
+     0.1373
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 3.0,
+     "dx": -0.00262,
+     "dy": 0.00523,
+     "cycles_per_loop": 1,
+     "phase_rad": 5.202
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float01_R",
+    "kind": "sprite",
+    "file": "ships/teyori_trader/parts/float01_R.webp",
+    "file_192": "ships/teyori_trader/parts_192/float01_R.webp",
+    "size_px": [
+     13,
+     28
+    ],
+    "pivot_px": [
+     6.2,
+     14.2
+    ],
+    "pivot_norm": [
+     0.4758,
+     0.4966
+    ],
+    "anchor_uv": [
+     0.60876,
+     0.1419
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": -3.0,
+     "dx": 0.00259,
+     "dy": 0.00519,
+     "cycles_per_loop": 1,
+     "phase_rad": 5.376
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float02_L",
+    "kind": "sprite",
+    "file": "ships/teyori_trader/parts/float02_L.webp",
+    "file_192": "ships/teyori_trader/parts_192/float02_L.webp",
+    "size_px": [
+     12,
+     16
+    ],
+    "pivot_px": [
+     6.2,
+     8.0
+    ],
+    "pivot_norm": [
+     0.5377,
+     0.4848
+    ],
+    "anchor_uv": [
+     0.37634,
+     0.22949
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 3.0,
+     "dx": -0.00219,
+     "dy": 0.00439,
+     "cycles_per_loop": 1,
+     "phase_rad": 2.412
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float03_R",
+    "kind": "sprite",
+    "file": "ships/teyori_trader/parts/float03_R.webp",
+    "file_192": "ships/teyori_trader/parts_192/float03_R.webp",
+    "size_px": [
+     10,
+     17
+    ],
+    "pivot_px": [
+     4.3,
+     7.6
+    ],
+    "pivot_norm": [
+     0.4571,
+     0.449
+    ],
+    "anchor_uv": [
+     0.62274,
+     0.23659
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": -3.0,
+     "dx": 0.00223,
+     "dy": 0.00445,
+     "cycles_per_loop": 1,
+     "phase_rad": 2.681
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float04_R",
+    "kind": "sprite",
+    "file": "ships/teyori_trader/parts/float04_R.webp",
+    "file_192": "ships/teyori_trader/parts_192/float04_R.webp",
+    "size_px": [
+     11,
+     12
+    ],
+    "pivot_px": [
+     5.7,
+     5.8
+    ],
+    "pivot_norm": [
+     0.5206,
+     0.5066
+    ],
+    "anchor_uv": [
+     0.70845,
+     0.43618
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": -3.0,
+     "dx": 0.00213,
+     "dy": 0.00427,
+     "cycles_per_loop": 1,
+     "phase_rad": 3.96
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float05_L",
+    "kind": "sprite",
+    "file": "ships/teyori_trader/parts/float05_L.webp",
+    "file_192": "ships/teyori_trader/parts_192/float05_L.webp",
+    "size_px": [
+     14,
+     12
+    ],
+    "pivot_px": [
+     6.3,
+     5.2
+    ],
+    "pivot_norm": [
+     0.4636,
+     0.4369
+    ],
+    "anchor_uv": [
+     0.28664,
+     0.46336
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 3.0,
+     "dx": -0.00222,
+     "dy": 0.00444,
+     "cycles_per_loop": 1,
+     "phase_rad": 4.99
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float06_R",
+    "kind": "sprite",
+    "file": "ships/teyori_trader/parts/float06_R.webp",
+    "file_192": "ships/teyori_trader/parts_192/float06_R.webp",
+    "size_px": [
+     13,
+     12
+    ],
+    "pivot_px": [
+     7.3,
+     4.5
+    ],
+    "pivot_norm": [
+     0.5638,
+     0.3571
+    ],
+    "anchor_uv": [
+     0.71256,
+     0.4638
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": -3.0,
+     "dx": 0.00218,
+     "dy": 0.00436,
+     "cycles_per_loop": 1,
+     "phase_rad": 5.006
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float07_L",
+    "kind": "sprite",
+    "file": "ships/teyori_trader/parts/float07_L.webp",
+    "file_192": "ships/teyori_trader/parts_192/float07_L.webp",
+    "size_px": [
+     6,
+     6
+    ],
+    "pivot_px": [
+     2.7,
+     3.4
+    ],
+    "pivot_norm": [
+     0.4154,
+     0.5231
+    ],
+    "anchor_uv": [
+     0.27969,
+     0.4832
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 3.0,
+     "dx": -0.00181,
+     "dy": 0.00361,
+     "cycles_per_loop": 1,
+     "phase_rad": 5.741
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float08_L",
+    "kind": "sprite",
+    "file": "ships/teyori_trader/parts/float08_L.webp",
+    "file_192": "ships/teyori_trader/parts_192/float08_L.webp",
+    "size_px": [
+     9,
+     12
+    ],
+    "pivot_px": [
+     4.5,
+     4.7
+    ],
+    "pivot_norm": [
+     0.4992,
+     0.3909
+    ],
+    "anchor_uv": [
+     0.29979,
+     0.49354
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 3.0,
+     "dx": -0.00205,
+     "dy": 0.00409,
+     "cycles_per_loop": 1,
+     "phase_rad": 6.133
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float09_R",
+    "kind": "sprite",
+    "file": "ships/teyori_trader/parts/float09_R.webp",
+    "file_192": "ships/teyori_trader/parts_192/float09_R.webp",
+    "size_px": [
+     8,
+     10
+    ],
+    "pivot_px": [
+     4.4,
+     4.5
+    ],
+    "pivot_norm": [
+     0.5215,
+     0.4706
+    ],
+    "anchor_uv": [
+     0.69909,
+     0.49311
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": -3.0,
+     "dx": 0.00199,
+     "dy": 0.00398,
+     "cycles_per_loop": 1,
+     "phase_rad": 6.116
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float10_L",
+    "kind": "sprite",
+    "file": "ships/teyori_trader/parts/float10_L.webp",
+    "file_192": "ships/teyori_trader/parts_192/float10_L.webp",
+    "size_px": [
+     12,
+     12
+    ],
+    "pivot_px": [
+     5.9,
+     5.6
+    ],
+    "pivot_norm": [
+     0.4877,
+     0.4839
+    ],
+    "anchor_uv": [
+     0.29463,
+     0.51673
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 3.0,
+     "dx": -0.00216,
+     "dy": 0.00433,
+     "cycles_per_loop": 1,
+     "phase_rad": 0.728
+    },
+    "carries_sockets": []
+   }
+  ]
+ },
+ "teyori_cruiser": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/teyori_cruiser/teyori_cruiser_glow_512.webp",
+   "color": [
+    200,
+    140,
+    255
+   ],
+   "alpha": "0.18+0.18*sin(2*pi*t)+0.22*flicker(t)"
+  },
+  "parts": [
+   {
+    "name": "float00_L",
+    "kind": "sprite",
+    "file": "ships/teyori_cruiser/parts/float00_L.webp",
+    "file_192": "ships/teyori_cruiser/parts_192/float00_L.webp",
+    "size_px": [
+     8,
+     18
+    ],
+    "pivot_px": [
+     3.5,
+     9.4
+    ],
+    "pivot_norm": [
+     0.4341,
+     0.5108
+    ],
+    "anchor_uv": [
+     0.44428,
+     0.17568
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 3.0,
+     "dx": -0.00218,
+     "dy": 0.00436,
+     "cycles_per_loop": 1,
+     "phase_rad": 0.373
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float01_R",
+    "kind": "sprite",
+    "file": "ships/teyori_cruiser/parts/float01_R.webp",
+    "file_192": "ships/teyori_cruiser/parts_192/float01_R.webp",
+    "size_px": [
+     8,
+     18
+    ],
+    "pivot_px": [
+     3.7,
+     8.6
+    ],
+    "pivot_norm": [
+     0.463,
+     0.4792
+    ],
+    "anchor_uv": [
+     0.55411,
+     0.17603
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": -3.0,
+     "dx": 0.0022,
+     "dy": 0.0044,
+     "cycles_per_loop": 1,
+     "phase_rad": 0.386
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float02_L",
+    "kind": "sprite",
+    "file": "ships/teyori_cruiser/parts/float02_L.webp",
+    "file_192": "ships/teyori_cruiser/parts_192/float02_L.webp",
+    "size_px": [
+     8,
+     15
+    ],
+    "pivot_px": [
+     4.0,
+     7.2
+    ],
+    "pivot_norm": [
+     0.5273,
+     0.4772
+    ],
+    "anchor_uv": [
+     0.42569,
+     0.23468
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 3.0,
+     "dx": -0.0021,
+     "dy": 0.00419,
+     "cycles_per_loop": 1,
+     "phase_rad": 2.609
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float03_R",
+    "kind": "sprite",
+    "file": "ships/teyori_cruiser/parts/float03_R.webp",
+    "file_192": "ships/teyori_cruiser/parts_192/float03_R.webp",
+    "size_px": [
+     7,
+     16
+    ],
+    "pivot_px": [
+     3.5,
+     7.7
+    ],
+    "pivot_norm": [
+     0.5039,
+     0.4997
+    ],
+    "anchor_uv": [
+     0.57232,
+     0.23485
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": -3.0,
+     "dx": 0.00211,
+     "dy": 0.00422,
+     "cycles_per_loop": 1,
+     "phase_rad": 2.615
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float04_L",
+    "kind": "sprite",
+    "file": "ships/teyori_cruiser/parts/float04_L.webp",
+    "file_192": "ships/teyori_cruiser/parts_192/float04_L.webp",
+    "size_px": [
+     10,
+     18
+    ],
+    "pivot_px": [
+     4.3,
+     8.8
+    ],
+    "pivot_norm": [
+     0.4322,
+     0.4764
+    ],
+    "anchor_uv": [
+     0.41762,
+     0.30628
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 3.0,
+     "dx": -0.00224,
+     "dy": 0.00448,
+     "cycles_per_loop": 1,
+     "phase_rad": 5.321
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float05_R",
+    "kind": "sprite",
+    "file": "ships/teyori_cruiser/parts/float05_R.webp",
+    "file_192": "ships/teyori_cruiser/parts_192/float05_R.webp",
+    "size_px": [
+     9,
+     18
+    ],
+    "pivot_px": [
+     4.1,
+     8.5
+    ],
+    "pivot_norm": [
+     0.4597,
+     0.4696
+    ],
+    "anchor_uv": [
+     0.58035,
+     0.30655
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": -3.0,
+     "dx": 0.00224,
+     "dy": 0.00448,
+     "cycles_per_loop": 1,
+     "phase_rad": 5.331
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float06_L",
+    "kind": "sprite",
+    "file": "ships/teyori_cruiser/parts/float06_L.webp",
+    "file_192": "ships/teyori_cruiser/parts_192/float06_L.webp",
+    "size_px": [
+     17,
+     16
+    ],
+    "pivot_px": [
+     7.8,
+     7.2
+    ],
+    "pivot_norm": [
+     0.4562,
+     0.4615
+    ],
+    "anchor_uv": [
+     0.36085,
+     0.34893
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 3.0,
+     "dx": -0.00238,
+     "dy": 0.00477,
+     "cycles_per_loop": 1,
+     "phase_rad": 0.654
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float07_R",
+    "kind": "sprite",
+    "file": "ships/teyori_cruiser/parts/float07_R.webp",
+    "file_192": "ships/teyori_cruiser/parts_192/float07_R.webp",
+    "size_px": [
+     16,
+     14
+    ],
+    "pivot_px": [
+     8.2,
+     6.6
+    ],
+    "pivot_norm": [
+     0.498,
+     0.4554
+    ],
+    "anchor_uv": [
+     0.63617,
+     0.34883
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": -3.0,
+     "dx": 0.00241,
+     "dy": 0.00481,
+     "cycles_per_loop": 1,
+     "phase_rad": 0.65
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float08_L",
+    "kind": "sprite",
+    "file": "ships/teyori_cruiser/parts/float08_L.webp",
+    "file_192": "ships/teyori_cruiser/parts_192/float08_L.webp",
+    "size_px": [
+     6,
+     11
+    ],
+    "pivot_px": [
+     3.1,
+     5.5
+    ],
+    "pivot_norm": [
+     0.5184,
+     0.5017
+    ],
+    "anchor_uv": [
+     0.39963,
+     0.34769
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 3.0,
+     "dx": -0.00193,
+     "dy": 0.00386,
+     "cycles_per_loop": 1,
+     "phase_rad": 0.607
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float09_R",
+    "kind": "sprite",
+    "file": "ships/teyori_cruiser/parts/float09_R.webp",
+    "file_192": "ships/teyori_cruiser/parts_192/float09_R.webp",
+    "size_px": [
+     6,
+     10
+    ],
+    "pivot_px": [
+     2.9,
+     5.0
+    ],
+    "pivot_norm": [
+     0.4869,
+     0.5029
+    ],
+    "anchor_uv": [
+     0.59848,
+     0.34771
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": -3.0,
+     "dx": 0.00194,
+     "dy": 0.00388,
+     "cycles_per_loop": 1,
+     "phase_rad": 0.608
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float10_L",
+    "kind": "sprite",
+    "file": "ships/teyori_cruiser/parts/float10_L.webp",
+    "file_192": "ships/teyori_cruiser/parts_192/float10_L.webp",
+    "size_px": [
+     10,
+     12
+    ],
+    "pivot_px": [
+     4.9,
+     5.4
+    ],
+    "pivot_norm": [
+     0.4943,
+     0.4731
+    ],
+    "anchor_uv": [
+     0.13563,
+     0.51844
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 3.0,
+     "dx": -0.00203,
+     "dy": 0.00405,
+     "cycles_per_loop": 1,
+     "phase_rad": 0.793
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float11_R",
+    "kind": "sprite",
+    "file": "ships/teyori_cruiser/parts/float11_R.webp",
+    "file_192": "ships/teyori_cruiser/parts_192/float11_R.webp",
+    "size_px": [
+     10,
+     11
+    ],
+    "pivot_px": [
+     4.4,
+     5.5
+    ],
+    "pivot_norm": [
+     0.4625,
+     0.4972
+    ],
+    "anchor_uv": [
+     0.8621,
+     0.5185
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": -3.0,
+     "dx": 0.00203,
+     "dy": 0.00406,
+     "cycles_per_loop": 1,
+     "phase_rad": 0.795
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float12_L",
+    "kind": "sprite",
+    "file": "ships/teyori_cruiser/parts/float12_L.webp",
+    "file_192": "ships/teyori_cruiser/parts_192/float12_L.webp",
+    "size_px": [
+     14,
+     14
+    ],
+    "pivot_px": [
+     6.3,
+     7.1
+    ],
+    "pivot_norm": [
+     0.47,
+     0.4927
+    ],
+    "anchor_uv": [
+     0.32392,
+     0.56181
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 3.0,
+     "dx": -0.0023,
+     "dy": 0.00461,
+     "cycles_per_loop": 1,
+     "phase_rad": 2.436
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float13_R",
+    "kind": "sprite",
+    "file": "ships/teyori_cruiser/parts/float13_R.webp",
+    "file_192": "ships/teyori_cruiser/parts_192/float13_R.webp",
+    "size_px": [
+     14,
+     14
+    ],
+    "pivot_px": [
+     6.9,
+     7.1
+    ],
+    "pivot_norm": [
+     0.4964,
+     0.487
+    ],
+    "anchor_uv": [
+     0.67373,
+     0.56164
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": -3.0,
+     "dx": 0.00229,
+     "dy": 0.00458,
+     "cycles_per_loop": 1,
+     "phase_rad": 2.43
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float14_L",
+    "kind": "sprite",
+    "file": "ships/teyori_cruiser/parts/float14_L.webp",
+    "file_192": "ships/teyori_cruiser/parts_192/float14_L.webp",
+    "size_px": [
+     8,
+     12
+    ],
+    "pivot_px": [
+     3.3,
+     6.7
+    ],
+    "pivot_norm": [
+     0.4411,
+     0.5548
+    ],
+    "anchor_uv": [
+     0.41174,
+     0.57062
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 3.0,
+     "dx": -0.002,
+     "dy": 0.004,
+     "cycles_per_loop": 1,
+     "phase_rad": 2.77
+    },
+    "carries_sockets": []
+   }
+  ]
+ },
+ "teyori_ark": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/teyori_ark/teyori_ark_glow_512.webp",
+   "color": [
+    200,
+    140,
+    255
+   ],
+   "alpha": "0.18+0.18*sin(2*pi*t)+0.22*flicker(t)"
+  },
+  "parts": [
+   {
+    "name": "side_pod_R",
+    "kind": "sprite",
+    "file": "ships/teyori_ark/parts/side_pod_R.webp",
+    "file_192": "ships/teyori_ark/parts_192/side_pod_R.webp",
+    "size_px": [
+     134,
+     302
+    ],
+    "pivot_px": [
+     66.0,
+     162.5
+    ],
+    "pivot_norm": [
+     0.4944,
+     0.5381
+    ],
+    "anchor_uv": [
+     0.85938,
+     0.54688
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": -1.0,
+     "dx": 0.00244,
+     "dy": 0.00488,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": [
+     "s2",
+     "s4",
+     "s6"
+    ]
+   },
+   {
+    "name": "side_pod_L",
+    "kind": "sprite",
+    "file": "ships/teyori_ark/parts/side_pod_L.webp",
+    "file_192": "ships/teyori_ark/parts_192/side_pod_L.webp",
+    "size_px": [
+     134,
+     302
+    ],
+    "pivot_px": [
+     67.5,
+     162.5
+    ],
+    "pivot_norm": [
+     0.5037,
+     0.5372
+    ],
+    "anchor_uv": [
+     0.13965,
+     0.54688
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 1.0,
+     "dx": -0.00244,
+     "dy": 0.00488,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": [
+     "s1",
+     "s3",
+     "s5"
+    ]
+   },
+   {
+    "name": "float00_R",
+    "kind": "sprite",
+    "file": "ships/teyori_ark/parts/float00_R.webp",
+    "file_192": "ships/teyori_ark/parts_192/float00_R.webp",
+    "size_px": [
+     14,
+     28
+    ],
+    "pivot_px": [
+     7.6,
+     12.7
+    ],
+    "pivot_norm": [
+     0.5409,
+     0.4533
+    ],
+    "anchor_uv": [
+     0.54506,
+     0.10096
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": -3.0,
+     "dx": 0.00251,
+     "dy": 0.00503,
+     "cycles_per_loop": 1,
+     "phase_rad": 3.825
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float01_R",
+    "kind": "sprite",
+    "file": "ships/teyori_ark/parts/float01_R.webp",
+    "file_192": "ships/teyori_ark/parts_192/float01_R.webp",
+    "size_px": [
+     9,
+     10
+    ],
+    "pivot_px": [
+     5.2,
+     4.6
+    ],
+    "pivot_norm": [
+     0.5832,
+     0.4857
+    ],
+    "anchor_uv": [
+     0.65674,
+     0.26975
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": -3.0,
+     "dx": 0.00197,
+     "dy": 0.00393,
+     "cycles_per_loop": 1,
+     "phase_rad": 3.937
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float02_L",
+    "kind": "sprite",
+    "file": "ships/teyori_ark/parts/float02_L.webp",
+    "file_192": "ships/teyori_ark/parts_192/float02_L.webp",
+    "size_px": [
+     8,
+     8
+    ],
+    "pivot_px": [
+     3.0,
+     4.1
+    ],
+    "pivot_norm": [
+     0.3744,
+     0.4862
+    ],
+    "anchor_uv": [
+     0.34276,
+     0.26979
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": 3.0,
+     "dx": -0.00189,
+     "dy": 0.00378,
+     "cycles_per_loop": 1,
+     "phase_rad": 3.939
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "float03_R",
+    "kind": "sprite",
+    "file": "ships/teyori_ark/parts/float03_R.webp",
+    "file_192": "ships/teyori_ark/parts_192/float03_R.webp",
+    "size_px": [
+     10,
+     10
+    ],
+    "pivot_px": [
+     5.2,
+     4.6
+    ],
+    "pivot_norm": [
+     0.5513,
+     0.4383
+    ],
+    "anchor_uv": [
+     0.68992,
+     0.34883
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "bob",
+     "amp_deg": -3.0,
+     "dx": 0.00197,
+     "dy": 0.00393,
+     "cycles_per_loop": 1,
+     "phase_rad": 0.65
+    },
+    "carries_sockets": []
+   }
+  ]
+ }
+}

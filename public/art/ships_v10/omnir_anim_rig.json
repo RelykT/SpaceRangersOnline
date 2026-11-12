@@ -1,0 +1,1246 @@
+{
+ "omnir_fighter": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/omnir_fighter/omnir_fighter_glow_512.webp",
+   "color": [
+    255,
+    70,
+    45
+   ],
+   "alpha": "0.30+0.30*sin(2*pi*(2*t))"
+  },
+  "parts": [
+   {
+    "name": "mandible_R",
+    "kind": "sprite",
+    "file": "ships/omnir_fighter/parts/mandible_R.webp",
+    "file_192": "ships/omnir_fighter/parts_192/mandible_R.webp",
+    "size_px": [
+     30,
+     69
+    ],
+    "pivot_px": [
+     15.3,
+     60.0
+    ],
+    "pivot_norm": [
+     0.519,
+     0.8696
+    ],
+    "anchor_uv": [
+     0.53223,
+     0.32715
+    ],
+    "layer": "under",
+    "rest_angle_deg": 4,
+    "motion": {
+     "type": "open",
+     "amp_deg": 14,
+     "cycles_per_loop": 1,
+     "phase_rad": 0.0
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "mandible_L",
+    "kind": "sprite",
+    "file": "ships/omnir_fighter/parts/mandible_L.webp",
+    "file_192": "ships/omnir_fighter/parts_192/mandible_L.webp",
+    "size_px": [
+     30,
+     69
+    ],
+    "pivot_px": [
+     14.4,
+     60.0
+    ],
+    "pivot_norm": [
+     0.4893,
+     0.8696
+    ],
+    "anchor_uv": [
+     0.4668,
+     0.32715
+    ],
+    "layer": "under",
+    "rest_angle_deg": -4,
+    "motion": {
+     "type": "open",
+     "amp_deg": -14,
+     "cycles_per_loop": 1,
+     "phase_rad": 0.0
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "tendril0_R",
+    "kind": "chain",
+    "layer": "under",
+    "anchor_uv": [
+     0.67383,
+     0.81055
+    ],
+    "rest_angle_deg": -12,
+    "segments": [
+     {
+      "file": "ships/omnir_fighter/parts/tendril0_R_seg0.webp",
+      "size_px": [
+       22,
+       40
+      ],
+      "pivot_px": [
+       11.4,
+       8.8
+      ],
+      "length": 0.05557,
+      "motion": {
+       "type": "sin",
+       "amp_deg": -9.0,
+       "cycles_per_loop": 1,
+       "phase_rad": 0.0
+      }
+     },
+     {
+      "file": "ships/omnir_fighter/parts/tendril0_R_seg1.webp",
+      "size_px": [
+       22,
+       30
+      ],
+      "pivot_px": [
+       11.4,
+       2.6
+      ],
+      "length": 0.04848,
+      "motion": {
+       "type": "sin",
+       "amp_deg": -13.5,
+       "cycles_per_loop": 1,
+       "phase_rad": -0.9
+      }
+     },
+     {
+      "file": "ships/omnir_fighter/parts/tendril0_R_seg2.webp",
+      "size_px": [
+       22,
+       29
+      ],
+      "pivot_px": [
+       11.4,
+       2.6
+      ],
+      "length": 0.0522,
+      "motion": {
+       "type": "sin",
+       "amp_deg": -18.0,
+       "cycles_per_loop": 1,
+       "phase_rad": -1.8
+      }
+     }
+    ],
+    "note": "angle_0=rest; angle_i=angle_{i-1}+amp_i*sin(2pi*t+phase_i); segment i drawn rotated by angle_i around its pivot at joint_i; joint_{i+1}=joint_i+rotate((0,length_i),angle_i). 0deg = hanging straight down (towards stern)."
+   },
+   {
+    "name": "tendril0_L",
+    "kind": "chain",
+    "layer": "under",
+    "anchor_uv": [
+     0.3252,
+     0.81055
+    ],
+    "rest_angle_deg": 12,
+    "segments": [
+     {
+      "file": "ships/omnir_fighter/parts/tendril0_L_seg0.webp",
+      "size_px": [
+       22,
+       40
+      ],
+      "pivot_px": [
+       11.4,
+       8.8
+      ],
+      "length": 0.05557,
+      "motion": {
+       "type": "sin",
+       "amp_deg": 9.0,
+       "cycles_per_loop": 1,
+       "phase_rad": 0.0
+      }
+     },
+     {
+      "file": "ships/omnir_fighter/parts/tendril0_L_seg1.webp",
+      "size_px": [
+       22,
+       30
+      ],
+      "pivot_px": [
+       11.4,
+       2.6
+      ],
+      "length": 0.04848,
+      "motion": {
+       "type": "sin",
+       "amp_deg": 13.5,
+       "cycles_per_loop": 1,
+       "phase_rad": -0.9
+      }
+     },
+     {
+      "file": "ships/omnir_fighter/parts/tendril0_L_seg2.webp",
+      "size_px": [
+       22,
+       29
+      ],
+      "pivot_px": [
+       11.4,
+       2.6
+      ],
+      "length": 0.0522,
+      "motion": {
+       "type": "sin",
+       "amp_deg": 18.0,
+       "cycles_per_loop": 1,
+       "phase_rad": -1.8
+      }
+     }
+    ],
+    "note": "angle_0=rest; angle_i=angle_{i-1}+amp_i*sin(2pi*t+phase_i); segment i drawn rotated by angle_i around its pivot at joint_i; joint_{i+1}=joint_i+rotate((0,length_i),angle_i). 0deg = hanging straight down (towards stern)."
+   }
+  ],
+  "core": {
+   "u": 0.5,
+   "v": 0.50293,
+   "radius": 0.05859,
+   "blur": 0.02734,
+   "color": [
+    255,
+    90,
+    60
+   ],
+   "alpha": "0.35+0.45*(0.5+0.5*sin(2*pi*(2*t)+0.6))"
+  }
+ },
+ "omnir_frigate": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/omnir_frigate/omnir_frigate_glow_512.webp",
+   "color": [
+    255,
+    70,
+    45
+   ],
+   "alpha": "0.30+0.30*sin(2*pi*(2*t))"
+  },
+  "parts": [
+   {
+    "name": "mandible_R",
+    "kind": "sprite",
+    "file": "ships/omnir_frigate/parts/mandible_R.webp",
+    "file_192": "ships/omnir_frigate/parts_192/mandible_R.webp",
+    "size_px": [
+     47,
+     110
+    ],
+    "pivot_px": [
+     24.2,
+     95.0
+    ],
+    "pivot_norm": [
+     0.5158,
+     0.8676
+    ],
+    "anchor_uv": [
+     0.55859,
+     0.19531
+    ],
+    "layer": "under",
+    "rest_angle_deg": 4,
+    "motion": {
+     "type": "open",
+     "amp_deg": 16,
+     "cycles_per_loop": 1,
+     "phase_rad": 0.0
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "mandible_L",
+    "kind": "sprite",
+    "file": "ships/omnir_frigate/parts/mandible_L.webp",
+    "file_192": "ships/omnir_frigate/parts_192/mandible_L.webp",
+    "size_px": [
+     47,
+     110
+    ],
+    "pivot_px": [
+     22.9,
+     95.0
+    ],
+    "pivot_norm": [
+     0.4863,
+     0.8676
+    ],
+    "anchor_uv": [
+     0.44043,
+     0.19531
+    ],
+    "layer": "under",
+    "rest_angle_deg": -4,
+    "motion": {
+     "type": "open",
+     "amp_deg": -16,
+     "cycles_per_loop": 1,
+     "phase_rad": 0.0
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "tendril0_R",
+    "kind": "chain",
+    "layer": "under",
+    "anchor_uv": [
+     0.69531,
+     0.75195
+    ],
+    "rest_angle_deg": -16,
+    "segments": [
+     {
+      "file": "ships/omnir_frigate/parts/tendril0_R_seg0.webp",
+      "size_px": [
+       32,
+       57
+      ],
+      "pivot_px": [
+       16.4,
+       12.7
+      ],
+      "length": 0.07989,
+      "motion": {
+       "type": "sin",
+       "amp_deg": -8.0,
+       "cycles_per_loop": 1,
+       "phase_rad": 0.0
+      }
+     },
+     {
+      "file": "ships/omnir_frigate/parts/tendril0_R_seg1.webp",
+      "size_px": [
+       32,
+       43
+      ],
+      "pivot_px": [
+       16.3,
+       3.7
+      ],
+      "length": 0.06969,
+      "motion": {
+       "type": "sin",
+       "amp_deg": -12.0,
+       "cycles_per_loop": 1,
+       "phase_rad": -0.9
+      }
+     },
+     {
+      "file": "ships/omnir_frigate/parts/tendril0_R_seg2.webp",
+      "size_px": [
+       32,
+       42
+      ],
+      "pivot_px": [
+       16.4,
+       3.7
+      ],
+      "length": 0.07503,
+      "motion": {
+       "type": "sin",
+       "amp_deg": -16.0,
+       "cycles_per_loop": 1,
+       "phase_rad": -1.8
+      }
+     }
+    ],
+    "note": "angle_0=rest; angle_i=angle_{i-1}+amp_i*sin(2pi*t+phase_i); segment i drawn rotated by angle_i around its pivot at joint_i; joint_{i+1}=joint_i+rotate((0,length_i),angle_i). 0deg = hanging straight down (towards stern)."
+   },
+   {
+    "name": "tendril0_L",
+    "kind": "chain",
+    "layer": "under",
+    "anchor_uv": [
+     0.30371,
+     0.75195
+    ],
+    "rest_angle_deg": 16,
+    "segments": [
+     {
+      "file": "ships/omnir_frigate/parts/tendril0_L_seg0.webp",
+      "size_px": [
+       32,
+       57
+      ],
+      "pivot_px": [
+       16.4,
+       12.7
+      ],
+      "length": 0.07989,
+      "motion": {
+       "type": "sin",
+       "amp_deg": 8.0,
+       "cycles_per_loop": 1,
+       "phase_rad": 0.0
+      }
+     },
+     {
+      "file": "ships/omnir_frigate/parts/tendril0_L_seg1.webp",
+      "size_px": [
+       32,
+       43
+      ],
+      "pivot_px": [
+       16.3,
+       3.7
+      ],
+      "length": 0.06969,
+      "motion": {
+       "type": "sin",
+       "amp_deg": 12.0,
+       "cycles_per_loop": 1,
+       "phase_rad": -0.9
+      }
+     },
+     {
+      "file": "ships/omnir_frigate/parts/tendril0_L_seg2.webp",
+      "size_px": [
+       32,
+       42
+      ],
+      "pivot_px": [
+       16.4,
+       3.7
+      ],
+      "length": 0.07503,
+      "motion": {
+       "type": "sin",
+       "amp_deg": 16.0,
+       "cycles_per_loop": 1,
+       "phase_rad": -1.8
+      }
+     }
+    ],
+    "note": "angle_0=rest; angle_i=angle_{i-1}+amp_i*sin(2pi*t+phase_i); segment i drawn rotated by angle_i around its pivot at joint_i; joint_{i+1}=joint_i+rotate((0,length_i),angle_i). 0deg = hanging straight down (towards stern)."
+   }
+  ],
+  "core": {
+   "u": 0.5,
+   "v": 0.50293,
+   "radius": 0.05859,
+   "blur": 0.02734,
+   "color": [
+    255,
+    90,
+    60
+   ],
+   "alpha": "0.35+0.45*(0.5+0.5*sin(2*pi*(2*t)+0.6))"
+  }
+ },
+ "omnir_cruiser": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/omnir_cruiser/omnir_cruiser_glow_512.webp",
+   "color": [
+    255,
+    70,
+    45
+   ],
+   "alpha": "0.30+0.30*sin(2*pi*(2*t))"
+  },
+  "parts": [
+   {
+    "name": "mandible_R",
+    "kind": "sprite",
+    "file": "ships/omnir_cruiser/parts/mandible_R.webp",
+    "file_192": "ships/omnir_cruiser/parts_192/mandible_R.webp",
+    "size_px": [
+     37,
+     86
+    ],
+    "pivot_px": [
+     19.1,
+     75.0
+    ],
+    "pivot_norm": [
+     0.5172,
+     0.8671
+    ],
+    "anchor_uv": [
+     0.53516,
+     0.10938
+    ],
+    "layer": "under",
+    "rest_angle_deg": 2,
+    "motion": {
+     "type": "open",
+     "amp_deg": 14,
+     "cycles_per_loop": 1,
+     "phase_rad": 0.0
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "mandible_L",
+    "kind": "sprite",
+    "file": "ships/omnir_cruiser/parts/mandible_L.webp",
+    "file_192": "ships/omnir_cruiser/parts_192/mandible_L.webp",
+    "size_px": [
+     37,
+     86
+    ],
+    "pivot_px": [
+     18.0,
+     75.0
+    ],
+    "pivot_norm": [
+     0.4877,
+     0.8671
+    ],
+    "anchor_uv": [
+     0.46387,
+     0.10938
+    ],
+    "layer": "under",
+    "rest_angle_deg": -2,
+    "motion": {
+     "type": "open",
+     "amp_deg": -14,
+     "cycles_per_loop": 1,
+     "phase_rad": 0.0
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "tendril0_R",
+    "kind": "chain",
+    "layer": "under",
+    "anchor_uv": [
+     0.61328,
+     0.90332
+    ],
+    "rest_angle_deg": -10,
+    "segments": [
+     {
+      "file": "ships/omnir_cruiser/parts/tendril0_R_seg0.webp",
+      "size_px": [
+       30,
+       52
+      ],
+      "pivot_px": [
+       15.0,
+       11.6
+      ],
+      "length": 0.07294,
+      "motion": {
+       "type": "sin",
+       "amp_deg": -8.0,
+       "cycles_per_loop": 1,
+       "phase_rad": 0.0
+      }
+     },
+     {
+      "file": "ships/omnir_cruiser/parts/tendril0_R_seg1.webp",
+      "size_px": [
+       30,
+       39
+      ],
+      "pivot_px": [
+       14.9,
+       3.4
+      ],
+      "length": 0.06363,
+      "motion": {
+       "type": "sin",
+       "amp_deg": -12.0,
+       "cycles_per_loop": 1,
+       "phase_rad": -0.9
+      }
+     },
+     {
+      "file": "ships/omnir_cruiser/parts/tendril0_R_seg2.webp",
+      "size_px": [
+       30,
+       38
+      ],
+      "pivot_px": [
+       15.0,
+       3.4
+      ],
+      "length": 0.06851,
+      "motion": {
+       "type": "sin",
+       "amp_deg": -16.0,
+       "cycles_per_loop": 1,
+       "phase_rad": -1.8
+      }
+     }
+    ],
+    "note": "angle_0=rest; angle_i=angle_{i-1}+amp_i*sin(2pi*t+phase_i); segment i drawn rotated by angle_i around its pivot at joint_i; joint_{i+1}=joint_i+rotate((0,length_i),angle_i). 0deg = hanging straight down (towards stern)."
+   },
+   {
+    "name": "tendril0_L",
+    "kind": "chain",
+    "layer": "under",
+    "anchor_uv": [
+     0.38574,
+     0.90332
+    ],
+    "rest_angle_deg": 10,
+    "segments": [
+     {
+      "file": "ships/omnir_cruiser/parts/tendril0_L_seg0.webp",
+      "size_px": [
+       30,
+       52
+      ],
+      "pivot_px": [
+       15.0,
+       11.6
+      ],
+      "length": 0.07294,
+      "motion": {
+       "type": "sin",
+       "amp_deg": 8.0,
+       "cycles_per_loop": 1,
+       "phase_rad": 0.0
+      }
+     },
+     {
+      "file": "ships/omnir_cruiser/parts/tendril0_L_seg1.webp",
+      "size_px": [
+       30,
+       39
+      ],
+      "pivot_px": [
+       14.9,
+       3.4
+      ],
+      "length": 0.06363,
+      "motion": {
+       "type": "sin",
+       "amp_deg": 12.0,
+       "cycles_per_loop": 1,
+       "phase_rad": -0.9
+      }
+     },
+     {
+      "file": "ships/omnir_cruiser/parts/tendril0_L_seg2.webp",
+      "size_px": [
+       30,
+       38
+      ],
+      "pivot_px": [
+       15.0,
+       3.4
+      ],
+      "length": 0.06851,
+      "motion": {
+       "type": "sin",
+       "amp_deg": 16.0,
+       "cycles_per_loop": 1,
+       "phase_rad": -1.8
+      }
+     }
+    ],
+    "note": "angle_0=rest; angle_i=angle_{i-1}+amp_i*sin(2pi*t+phase_i); segment i drawn rotated by angle_i around its pivot at joint_i; joint_{i+1}=joint_i+rotate((0,length_i),angle_i). 0deg = hanging straight down (towards stern)."
+   }
+  ],
+  "core": {
+   "u": 0.5,
+   "v": 0.63477,
+   "radius": 0.05859,
+   "blur": 0.02734,
+   "color": [
+    255,
+    90,
+    60
+   ],
+   "alpha": "0.35+0.45*(0.5+0.5*sin(2*pi*(2*t)+0.6))"
+  }
+ },
+ "omnir_carrier": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/omnir_carrier/omnir_carrier_glow_512.webp",
+   "color": [
+    255,
+    70,
+    45
+   ],
+   "alpha": "0.30+0.30*sin(2*pi*(2*t))"
+  },
+  "parts": [
+   {
+    "name": "mandible_R",
+    "kind": "sprite",
+    "file": "ships/omnir_carrier/parts/mandible_R.webp",
+    "file_192": "ships/omnir_carrier/parts_192/mandible_R.webp",
+    "size_px": [
+     40,
+     92
+    ],
+    "pivot_px": [
+     20.4,
+     80.0
+    ],
+    "pivot_norm": [
+     0.5168,
+     0.8696
+    ],
+    "anchor_uv": [
+     0.55273,
+     0.14648
+    ],
+    "layer": "under",
+    "rest_angle_deg": 6,
+    "motion": {
+     "type": "open",
+     "amp_deg": 12,
+     "cycles_per_loop": 1,
+     "phase_rad": 0.0
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "mandible_L",
+    "kind": "sprite",
+    "file": "ships/omnir_carrier/parts/mandible_L.webp",
+    "file_192": "ships/omnir_carrier/parts_192/mandible_L.webp",
+    "size_px": [
+     40,
+     92
+    ],
+    "pivot_px": [
+     19.2,
+     80.0
+    ],
+    "pivot_norm": [
+     0.4873,
+     0.8696
+    ],
+    "anchor_uv": [
+     0.44629,
+     0.14648
+    ],
+    "layer": "under",
+    "rest_angle_deg": -6,
+    "motion": {
+     "type": "open",
+     "amp_deg": -12,
+     "cycles_per_loop": 1,
+     "phase_rad": 0.0
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "tendril0_R",
+    "kind": "chain",
+    "layer": "under",
+    "anchor_uv": [
+     0.71777,
+     0.77148
+    ],
+    "rest_angle_deg": -32,
+    "segments": [
+     {
+      "file": "ships/omnir_carrier/parts/tendril0_R_seg0.webp",
+      "size_px": [
+       32,
+       57
+      ],
+      "pivot_px": [
+       16.4,
+       12.7
+      ],
+      "length": 0.07989,
+      "motion": {
+       "type": "sin",
+       "amp_deg": -8.0,
+       "cycles_per_loop": 1,
+       "phase_rad": 0.0
+      }
+     },
+     {
+      "file": "ships/omnir_carrier/parts/tendril0_R_seg1.webp",
+      "size_px": [
+       32,
+       43
+      ],
+      "pivot_px": [
+       16.3,
+       3.7
+      ],
+      "length": 0.06969,
+      "motion": {
+       "type": "sin",
+       "amp_deg": -12.0,
+       "cycles_per_loop": 1,
+       "phase_rad": -0.9
+      }
+     },
+     {
+      "file": "ships/omnir_carrier/parts/tendril0_R_seg2.webp",
+      "size_px": [
+       32,
+       42
+      ],
+      "pivot_px": [
+       16.4,
+       3.7
+      ],
+      "length": 0.07503,
+      "motion": {
+       "type": "sin",
+       "amp_deg": -16.0,
+       "cycles_per_loop": 1,
+       "phase_rad": -1.8
+      }
+     }
+    ],
+    "note": "angle_0=rest; angle_i=angle_{i-1}+amp_i*sin(2pi*t+phase_i); segment i drawn rotated by angle_i around its pivot at joint_i; joint_{i+1}=joint_i+rotate((0,length_i),angle_i). 0deg = hanging straight down (towards stern)."
+   },
+   {
+    "name": "tendril0_L",
+    "kind": "chain",
+    "layer": "under",
+    "anchor_uv": [
+     0.28125,
+     0.77148
+    ],
+    "rest_angle_deg": 32,
+    "segments": [
+     {
+      "file": "ships/omnir_carrier/parts/tendril0_L_seg0.webp",
+      "size_px": [
+       32,
+       57
+      ],
+      "pivot_px": [
+       16.4,
+       12.7
+      ],
+      "length": 0.07989,
+      "motion": {
+       "type": "sin",
+       "amp_deg": 8.0,
+       "cycles_per_loop": 1,
+       "phase_rad": 0.0
+      }
+     },
+     {
+      "file": "ships/omnir_carrier/parts/tendril0_L_seg1.webp",
+      "size_px": [
+       32,
+       43
+      ],
+      "pivot_px": [
+       16.3,
+       3.7
+      ],
+      "length": 0.06969,
+      "motion": {
+       "type": "sin",
+       "amp_deg": 12.0,
+       "cycles_per_loop": 1,
+       "phase_rad": -0.9
+      }
+     },
+     {
+      "file": "ships/omnir_carrier/parts/tendril0_L_seg2.webp",
+      "size_px": [
+       32,
+       42
+      ],
+      "pivot_px": [
+       16.4,
+       3.7
+      ],
+      "length": 0.07503,
+      "motion": {
+       "type": "sin",
+       "amp_deg": 16.0,
+       "cycles_per_loop": 1,
+       "phase_rad": -1.8
+      }
+     }
+    ],
+    "note": "angle_0=rest; angle_i=angle_{i-1}+amp_i*sin(2pi*t+phase_i); segment i drawn rotated by angle_i around its pivot at joint_i; joint_{i+1}=joint_i+rotate((0,length_i),angle_i). 0deg = hanging straight down (towards stern)."
+   }
+  ],
+  "core": {
+   "u": 0.5,
+   "v": 0.49805,
+   "radius": 0.05859,
+   "blur": 0.02734,
+   "color": [
+    255,
+    90,
+    60
+   ],
+   "alpha": "0.35+0.45*(0.5+0.5*sin(2*pi*(2*t)+0.6))"
+  }
+ },
+ "omnir_dreadnought": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/omnir_dreadnought/omnir_dreadnought_glow_512.webp",
+   "color": [
+    255,
+    70,
+    45
+   ],
+   "alpha": "0.30+0.30*sin(2*pi*(2*t))"
+  },
+  "parts": [
+   {
+    "name": "mandible_R",
+    "kind": "sprite",
+    "file": "ships/omnir_dreadnought/parts/mandible_R.webp",
+    "file_192": "ships/omnir_dreadnought/parts_192/mandible_R.webp",
+    "size_px": [
+     57,
+     132
+    ],
+    "pivot_px": [
+     29.3,
+     115.0
+    ],
+    "pivot_norm": [
+     0.5148,
+     0.8679
+    ],
+    "anchor_uv": [
+     0.58984,
+     0.20996
+    ],
+    "layer": "under",
+    "rest_angle_deg": 4,
+    "motion": {
+     "type": "open",
+     "amp_deg": 14,
+     "cycles_per_loop": 1,
+     "phase_rad": 0.0
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "mandible_L",
+    "kind": "sprite",
+    "file": "ships/omnir_dreadnought/parts/mandible_L.webp",
+    "file_192": "ships/omnir_dreadnought/parts_192/mandible_L.webp",
+    "size_px": [
+     57,
+     132
+    ],
+    "pivot_px": [
+     27.7,
+     115.0
+    ],
+    "pivot_norm": [
+     0.4854,
+     0.8679
+    ],
+    "anchor_uv": [
+     0.40918,
+     0.20996
+    ],
+    "layer": "under",
+    "rest_angle_deg": -4,
+    "motion": {
+     "type": "open",
+     "amp_deg": -14,
+     "cycles_per_loop": 1,
+     "phase_rad": 0.0
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "tendril0_R",
+    "kind": "chain",
+    "layer": "under",
+    "anchor_uv": [
+     0.71777,
+     0.85156
+    ],
+    "rest_angle_deg": -14,
+    "segments": [
+     {
+      "file": "ships/omnir_dreadnought/parts/tendril0_R_seg0.webp",
+      "size_px": [
+       36,
+       62
+      ],
+      "pivot_px": [
+       17.8,
+       13.8
+      ],
+      "length": 0.08683,
+      "motion": {
+       "type": "sin",
+       "amp_deg": -7.0,
+       "cycles_per_loop": 1,
+       "phase_rad": 0.0
+      }
+     },
+     {
+      "file": "ships/omnir_dreadnought/parts/tendril0_R_seg1.webp",
+      "size_px": [
+       36,
+       46
+      ],
+      "pivot_px": [
+       17.8,
+       4.1
+      ],
+      "length": 0.07575,
+      "motion": {
+       "type": "sin",
+       "amp_deg": -10.5,
+       "cycles_per_loop": 1,
+       "phase_rad": -0.9
+      }
+     },
+     {
+      "file": "ships/omnir_dreadnought/parts/tendril0_R_seg2.webp",
+      "size_px": [
+       36,
+       46
+      ],
+      "pivot_px": [
+       17.8,
+       4.1
+      ],
+      "length": 0.08156,
+      "motion": {
+       "type": "sin",
+       "amp_deg": -14.0,
+       "cycles_per_loop": 1,
+       "phase_rad": -1.8
+      }
+     }
+    ],
+    "note": "angle_0=rest; angle_i=angle_{i-1}+amp_i*sin(2pi*t+phase_i); segment i drawn rotated by angle_i around its pivot at joint_i; joint_{i+1}=joint_i+rotate((0,length_i),angle_i). 0deg = hanging straight down (towards stern)."
+   },
+   {
+    "name": "tendril0_L",
+    "kind": "chain",
+    "layer": "under",
+    "anchor_uv": [
+     0.28125,
+     0.85156
+    ],
+    "rest_angle_deg": 14,
+    "segments": [
+     {
+      "file": "ships/omnir_dreadnought/parts/tendril0_L_seg0.webp",
+      "size_px": [
+       36,
+       62
+      ],
+      "pivot_px": [
+       17.8,
+       13.8
+      ],
+      "length": 0.08683,
+      "motion": {
+       "type": "sin",
+       "amp_deg": 7.0,
+       "cycles_per_loop": 1,
+       "phase_rad": 0.0
+      }
+     },
+     {
+      "file": "ships/omnir_dreadnought/parts/tendril0_L_seg1.webp",
+      "size_px": [
+       36,
+       46
+      ],
+      "pivot_px": [
+       17.8,
+       4.1
+      ],
+      "length": 0.07575,
+      "motion": {
+       "type": "sin",
+       "amp_deg": 10.5,
+       "cycles_per_loop": 1,
+       "phase_rad": -0.9
+      }
+     },
+     {
+      "file": "ships/omnir_dreadnought/parts/tendril0_L_seg2.webp",
+      "size_px": [
+       36,
+       46
+      ],
+      "pivot_px": [
+       17.8,
+       4.1
+      ],
+      "length": 0.08156,
+      "motion": {
+       "type": "sin",
+       "amp_deg": 14.0,
+       "cycles_per_loop": 1,
+       "phase_rad": -1.8
+      }
+     }
+    ],
+    "note": "angle_0=rest; angle_i=angle_{i-1}+amp_i*sin(2pi*t+phase_i); segment i drawn rotated by angle_i around its pivot at joint_i; joint_{i+1}=joint_i+rotate((0,length_i),angle_i). 0deg = hanging straight down (towards stern)."
+   },
+   {
+    "name": "tendril1_R",
+    "kind": "chain",
+    "layer": "under",
+    "anchor_uv": [
+     0.76172,
+     0.71777
+    ],
+    "rest_angle_deg": -34,
+    "segments": [
+     {
+      "file": "ships/omnir_dreadnought/parts/tendril1_R_seg0.webp",
+      "size_px": [
+       28,
+       50
+      ],
+      "pivot_px": [
+       14.3,
+       11.0
+      ],
+      "length": 0.06947,
+      "motion": {
+       "type": "sin",
+       "amp_deg": -9.0,
+       "cycles_per_loop": 1,
+       "phase_rad": 1.7
+      }
+     },
+     {
+      "file": "ships/omnir_dreadnought/parts/tendril1_R_seg1.webp",
+      "size_px": [
+       28,
+       38
+      ],
+      "pivot_px": [
+       14.2,
+       3.2
+      ],
+      "length": 0.0606,
+      "motion": {
+       "type": "sin",
+       "amp_deg": -13.5,
+       "cycles_per_loop": 1,
+       "phase_rad": 0.8
+      }
+     },
+     {
+      "file": "ships/omnir_dreadnought/parts/tendril1_R_seg2.webp",
+      "size_px": [
+       28,
+       36
+      ],
+      "pivot_px": [
+       14.3,
+       3.2
+      ],
+      "length": 0.06524,
+      "motion": {
+       "type": "sin",
+       "amp_deg": -18.0,
+       "cycles_per_loop": 1,
+       "phase_rad": -0.1
+      }
+     }
+    ],
+    "note": "angle_0=rest; angle_i=angle_{i-1}+amp_i*sin(2pi*t+phase_i); segment i drawn rotated by angle_i around its pivot at joint_i; joint_{i+1}=joint_i+rotate((0,length_i),angle_i). 0deg = hanging straight down (towards stern)."
+   },
+   {
+    "name": "tendril1_L",
+    "kind": "chain",
+    "layer": "under",
+    "anchor_uv": [
+     0.2373,
+     0.71777
+    ],
+    "rest_angle_deg": 34,
+    "segments": [
+     {
+      "file": "ships/omnir_dreadnought/parts/tendril1_L_seg0.webp",
+      "size_px": [
+       28,
+       50
+      ],
+      "pivot_px": [
+       14.3,
+       11.0
+      ],
+      "length": 0.06947,
+      "motion": {
+       "type": "sin",
+       "amp_deg": 9.0,
+       "cycles_per_loop": 1,
+       "phase_rad": 1.7
+      }
+     },
+     {
+      "file": "ships/omnir_dreadnought/parts/tendril1_L_seg1.webp",
+      "size_px": [
+       28,
+       38
+      ],
+      "pivot_px": [
+       14.2,
+       3.2
+      ],
+      "length": 0.0606,
+      "motion": {
+       "type": "sin",
+       "amp_deg": 13.5,
+       "cycles_per_loop": 1,
+       "phase_rad": 0.8
+      }
+     },
+     {
+      "file": "ships/omnir_dreadnought/parts/tendril1_L_seg2.webp",
+      "size_px": [
+       28,
+       36
+      ],
+      "pivot_px": [
+       14.3,
+       3.2
+      ],
+      "length": 0.06524,
+      "motion": {
+       "type": "sin",
+       "amp_deg": 18.0,
+       "cycles_per_loop": 1,
+       "phase_rad": -0.1
+      }
+     }
+    ],
+    "note": "angle_0=rest; angle_i=angle_{i-1}+amp_i*sin(2pi*t+phase_i); segment i drawn rotated by angle_i around its pivot at joint_i; joint_{i+1}=joint_i+rotate((0,length_i),angle_i). 0deg = hanging straight down (towards stern)."
+   }
+  ],
+  "core": {
+   "u": 0.5,
+   "v": 0.55176,
+   "radius": 0.05859,
+   "blur": 0.02734,
+   "color": [
+    255,
+    90,
+    60
+   ],
+   "alpha": "0.35+0.45*(0.5+0.5*sin(2*pi*(2*t)+0.6))"
+  }
+ }
+}

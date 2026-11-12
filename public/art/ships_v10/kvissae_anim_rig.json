@@ -1,0 +1,870 @@
+{
+ "kvissae_fighter": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/kvissae_fighter/kvissae_fighter_glow_512.webp",
+   "color": [
+    140,
+    230,
+    255
+   ],
+   "alpha": "0.22+0.22*sin(2*pi*(2*t))"
+  },
+  "parts": [
+   {
+    "name": "wing_R",
+    "kind": "sprite",
+    "file": "ships/kvissae_fighter/parts/wing_R.webp",
+    "file_192": "ships/kvissae_fighter/parts_192/wing_R.webp",
+    "size_px": [
+     154,
+     258
+    ],
+    "pivot_px": [
+     0.0,
+     128.0
+    ],
+    "pivot_norm": [
+     0.0,
+     0.4971
+    ],
+    "anchor_uv": [
+     0.54688,
+     0.3125
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": -3.0,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": [
+     "s1"
+    ]
+   },
+   {
+    "name": "wing_L",
+    "kind": "sprite",
+    "file": "ships/kvissae_fighter/parts/wing_L.webp",
+    "file_192": "ships/kvissae_fighter/parts_192/wing_L.webp",
+    "size_px": [
+     154,
+     258
+    ],
+    "pivot_px": [
+     153.5,
+     128.5
+    ],
+    "pivot_norm": [
+     0.9968,
+     0.4981
+    ],
+    "anchor_uv": [
+     0.45312,
+     0.3125
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": 3.0,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": [
+     "s0"
+    ]
+   },
+   {
+    "name": "tail_R",
+    "kind": "sprite",
+    "file": "ships/kvissae_fighter/parts/tail_R.webp",
+    "file_192": "ships/kvissae_fighter/parts_192/tail_R.webp",
+    "size_px": [
+     88,
+     200
+    ],
+    "pivot_px": [
+     3.0,
+     5.0
+    ],
+    "pivot_norm": [
+     0.0339,
+     0.025
+    ],
+    "anchor_uv": [
+     0.51562,
+     0.55664
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": -2.5,
+     "cycles_per_loop": 1,
+     "phase_rad": 1.6
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "tail_L",
+    "kind": "sprite",
+    "file": "ships/kvissae_fighter/parts/tail_L.webp",
+    "file_192": "ships/kvissae_fighter/parts_192/tail_L.webp",
+    "size_px": [
+     90,
+     200
+    ],
+    "pivot_px": [
+     86.0,
+     5.0
+    ],
+    "pivot_norm": [
+     0.9609,
+     0.0251
+    ],
+    "anchor_uv": [
+     0.48438,
+     0.55664
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": 2.5,
+     "cycles_per_loop": 1,
+     "phase_rad": 1.6
+    },
+    "carries_sockets": []
+   }
+  ],
+  "glints": [
+   {
+    "u": 0.50057,
+    "v": 0.5154,
+    "size": 0.0309
+   },
+   {
+    "u": 0.49866,
+    "v": 0.19869,
+    "size": 0.02059
+   },
+   {
+    "u": 0.50008,
+    "v": 0.18316,
+    "size": 0.01914
+   },
+   {
+    "u": 0.49338,
+    "v": 0.26971,
+    "size": 0.0186
+   },
+   {
+    "u": 0.4986,
+    "v": 0.33506,
+    "size": 0.01832
+   },
+   {
+    "u": 0.54346,
+    "v": 0.31702,
+    "size": 0.01602
+   },
+   {
+    "u": 0.49876,
+    "v": 0.25566,
+    "size": 0.01582
+   },
+   {
+    "u": 0.47775,
+    "v": 0.23284,
+    "size": 0.01561
+   }
+  ]
+ },
+ "kvissae_frigate": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/kvissae_frigate/kvissae_frigate_glow_512.webp",
+   "color": [
+    140,
+    230,
+    255
+   ],
+   "alpha": "0.22+0.22*sin(2*pi*(2*t))"
+  },
+  "parts": [
+   {
+    "name": "wing_shell_R",
+    "kind": "sprite",
+    "file": "ships/kvissae_frigate/parts/wing_shell_R.webp",
+    "file_192": "ships/kvissae_frigate/parts_192/wing_shell_R.webp",
+    "size_px": [
+     127,
+     259
+    ],
+    "pivot_px": [
+     7.5,
+     10.0
+    ],
+    "pivot_norm": [
+     0.0591,
+     0.0386
+    ],
+    "anchor_uv": [
+     0.5957,
+     0.26367
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": -1.4,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": [
+     "s1"
+    ]
+   },
+   {
+    "name": "wing_shell_L",
+    "kind": "sprite",
+    "file": "ships/kvissae_frigate/parts/wing_shell_L.webp",
+    "file_192": "ships/kvissae_frigate/parts_192/wing_shell_L.webp",
+    "size_px": [
+     128,
+     258
+    ],
+    "pivot_px": [
+     120.5,
+     10.0
+    ],
+    "pivot_norm": [
+     0.9377,
+     0.0387
+    ],
+    "anchor_uv": [
+     0.40039,
+     0.26367
+    ],
+    "layer": "over",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": 1.4,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": [
+     "s0"
+    ]
+   }
+  ],
+  "glints": [
+   {
+    "u": 0.39795,
+    "v": 0.87686,
+    "size": 0.03125
+   },
+   {
+    "u": 0.59824,
+    "v": 0.87727,
+    "size": 0.03125
+   },
+   {
+    "u": 0.39197,
+    "v": 0.81344,
+    "size": 0.02941
+   },
+   {
+    "u": 0.55952,
+    "v": 0.17693,
+    "size": 0.02531
+   },
+   {
+    "u": 0.41273,
+    "v": 0.1792,
+    "size": 0.02499
+   },
+   {
+    "u": 0.38866,
+    "v": 0.82922,
+    "size": 0.02409
+   },
+   {
+    "u": 0.59911,
+    "v": 0.81415,
+    "size": 0.02135
+   },
+   {
+    "u": 0.56624,
+    "v": 0.16314,
+    "size": 0.02103
+   }
+  ]
+ },
+ "kvissae_trader": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/kvissae_trader/kvissae_trader_glow_512.webp",
+   "color": [
+    140,
+    230,
+    255
+   ],
+   "alpha": "0.22+0.22*sin(2*pi*(2*t))"
+  },
+  "parts": [
+   {
+    "name": "wing_R",
+    "kind": "sprite",
+    "file": "ships/kvissae_trader/parts/wing_R.webp",
+    "file_192": "ships/kvissae_trader/parts_192/wing_R.webp",
+    "size_px": [
+     189,
+     182
+    ],
+    "pivot_px": [
+     0.0,
+     40.0
+    ],
+    "pivot_norm": [
+     0.0,
+     0.2204
+    ],
+    "anchor_uv": [
+     0.58105,
+     0.50781
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": -2.5,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": [
+     "s3",
+     "s5"
+    ]
+   },
+   {
+    "name": "wing_L",
+    "kind": "sprite",
+    "file": "ships/kvissae_trader/parts/wing_L.webp",
+    "file_192": "ships/kvissae_trader/parts_192/wing_L.webp",
+    "size_px": [
+     189,
+     184
+    ],
+    "pivot_px": [
+     188.5,
+     40.0
+    ],
+    "pivot_norm": [
+     0.9974,
+     0.2174
+    ],
+    "anchor_uv": [
+     0.41699,
+     0.50781
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": 2.5,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": [
+     "s2",
+     "s4"
+    ]
+   },
+   {
+    "name": "tail_fan_R",
+    "kind": "sprite",
+    "file": "ships/kvissae_trader/parts/tail_fan_R.webp",
+    "file_192": "ships/kvissae_trader/parts_192/tail_fan_R.webp",
+    "size_px": [
+     56,
+     94
+    ],
+    "pivot_px": [
+     -7.5,
+     2.5
+    ],
+    "pivot_norm": [
+     -0.1327,
+     0.0266
+    ],
+    "anchor_uv": [
+     0.57129,
+     0.70801
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": -3.0,
+     "cycles_per_loop": 1,
+     "phase_rad": 1.6
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "tail_fan_L",
+    "kind": "sprite",
+    "file": "ships/kvissae_trader/parts/tail_fan_L.webp",
+    "file_192": "ships/kvissae_trader/parts_192/tail_fan_L.webp",
+    "size_px": [
+     57,
+     94
+    ],
+    "pivot_px": [
+     64.0,
+     2.5
+    ],
+    "pivot_norm": [
+     1.1228,
+     0.0265
+    ],
+    "anchor_uv": [
+     0.42676,
+     0.70801
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": 3.0,
+     "cycles_per_loop": 1,
+     "phase_rad": 1.6
+    },
+    "carries_sockets": []
+   }
+  ],
+  "glints": [
+   {
+    "u": 0.49714,
+    "v": 0.30858,
+    "size": 0.02608
+   },
+   {
+    "u": 0.44684,
+    "v": 0.92185,
+    "size": 0.02451
+   },
+   {
+    "u": 0.54892,
+    "v": 0.92416,
+    "size": 0.02442
+   },
+   {
+    "u": 0.39386,
+    "v": 0.90464,
+    "size": 0.02426
+   },
+   {
+    "u": 0.60182,
+    "v": 0.90413,
+    "size": 0.02302
+   },
+   {
+    "u": 0.49805,
+    "v": 0.06104,
+    "size": 0.02187
+   },
+   {
+    "u": 0.49902,
+    "v": 0.24854,
+    "size": 0.01888
+   },
+   {
+    "u": 0.49902,
+    "v": 0.10791,
+    "size": 0.01803
+   }
+  ]
+ },
+ "kvissae_cruiser": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/kvissae_cruiser/kvissae_cruiser_glow_512.webp",
+   "color": [
+    140,
+    230,
+    255
+   ],
+   "alpha": "0.22+0.22*sin(2*pi*(2*t))"
+  },
+  "parts": [
+   {
+    "name": "wing_R",
+    "kind": "sprite",
+    "file": "ships/kvissae_cruiser/parts/wing_R.webp",
+    "file_192": "ships/kvissae_cruiser/parts_192/wing_R.webp",
+    "size_px": [
+     203,
+     108
+    ],
+    "pivot_px": [
+     -2.5,
+     40.0
+    ],
+    "pivot_norm": [
+     -0.0123,
+     0.3721
+    ],
+    "anchor_uv": [
+     0.54688,
+     0.5127
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": -2.5,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": [
+     "s2",
+     "s4",
+     "s6"
+    ]
+   },
+   {
+    "name": "wing_L",
+    "kind": "sprite",
+    "file": "ships/kvissae_cruiser/parts/wing_L.webp",
+    "file_192": "ships/kvissae_cruiser/parts_192/wing_L.webp",
+    "size_px": [
+     199,
+     108
+    ],
+    "pivot_px": [
+     201.0,
+     40.0
+    ],
+    "pivot_norm": [
+     1.0101,
+     0.3704
+    ],
+    "anchor_uv": [
+     0.44531,
+     0.5127
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": 2.5,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": [
+     "s1",
+     "s3",
+     "s5"
+    ]
+   },
+   {
+    "name": "tail_fan_R",
+    "kind": "sprite",
+    "file": "ships/kvissae_cruiser/parts/tail_fan_R.webp",
+    "file_192": "ships/kvissae_cruiser/parts_192/tail_fan_R.webp",
+    "size_px": [
+     27,
+     76
+    ],
+    "pivot_px": [
+     -15.0,
+     -2.5
+    ],
+    "pivot_norm": [
+     -0.5556,
+     -0.0331
+    ],
+    "anchor_uv": [
+     0.53223,
+     0.75684
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": -3.0,
+     "cycles_per_loop": 1,
+     "phase_rad": 1.6
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "tail_fan_L",
+    "kind": "sprite",
+    "file": "ships/kvissae_cruiser/parts/tail_fan_L.webp",
+    "file_192": "ships/kvissae_cruiser/parts_192/tail_fan_L.webp",
+    "size_px": [
+     27,
+     77
+    ],
+    "pivot_px": [
+     41.5,
+     -1.0
+    ],
+    "pivot_norm": [
+     1.537,
+     -0.013
+    ],
+    "anchor_uv": [
+     0.45996,
+     0.75684
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": 3.0,
+     "cycles_per_loop": 1,
+     "phase_rad": 1.6
+    },
+    "carries_sockets": []
+   }
+  ],
+  "glints": [
+   {
+    "u": 0.54589,
+    "v": 0.89646,
+    "size": 0.02426
+   },
+   {
+    "u": 0.44541,
+    "v": 0.8951,
+    "size": 0.02293
+   },
+   {
+    "u": 0.49571,
+    "v": 0.90442,
+    "size": 0.02246
+   },
+   {
+    "u": 0.48441,
+    "v": 0.23434,
+    "size": 0.02103
+   },
+   {
+    "u": 0.49452,
+    "v": 0.40403,
+    "size": 0.01914
+   },
+   {
+    "u": 0.49381,
+    "v": 0.59487,
+    "size": 0.01901
+   },
+   {
+    "u": 0.49509,
+    "v": 0.13701,
+    "size": 0.01888
+   },
+   {
+    "u": 0.49469,
+    "v": 0.22418,
+    "size": 0.01758
+   }
+  ]
+ },
+ "kvissae_flagship": {
+  "loop_s": 2.4,
+  "glow": {
+   "file": "ships/kvissae_flagship/kvissae_flagship_glow_512.webp",
+   "color": [
+    140,
+    230,
+    255
+   ],
+   "alpha": "0.22+0.22*sin(2*pi*(2*t))"
+  },
+  "parts": [
+   {
+    "name": "wing_R",
+    "kind": "sprite",
+    "file": "ships/kvissae_flagship/parts/wing_R.webp",
+    "file_192": "ships/kvissae_flagship/parts_192/wing_R.webp",
+    "size_px": [
+     195,
+     111
+    ],
+    "pivot_px": [
+     -5.0,
+     67.0
+    ],
+    "pivot_norm": [
+     -0.0256,
+     0.6036
+    ],
+    "anchor_uv": [
+     0.60059,
+     0.46875
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": -2.2,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": [
+     "s2",
+     "s4",
+     "s6"
+    ]
+   },
+   {
+    "name": "wing_L",
+    "kind": "sprite",
+    "file": "ships/kvissae_flagship/parts/wing_L.webp",
+    "file_192": "ships/kvissae_flagship/parts_192/wing_L.webp",
+    "size_px": [
+     194,
+     112
+    ],
+    "pivot_px": [
+     199.0,
+     67.5
+    ],
+    "pivot_norm": [
+     1.0231,
+     0.6054
+    ],
+    "anchor_uv": [
+     0.39844,
+     0.46875
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": 2.2,
+     "cycles_per_loop": 1,
+     "phase_rad": 0
+    },
+    "carries_sockets": [
+     "s1",
+     "s3",
+     "s5"
+    ]
+   },
+   {
+    "name": "tail_skirt_R",
+    "kind": "sprite",
+    "file": "ships/kvissae_flagship/parts/tail_skirt_R.webp",
+    "file_192": "ships/kvissae_flagship/parts_192/tail_skirt_R.webp",
+    "size_px": [
+     84,
+     168
+    ],
+    "pivot_px": [
+     -6.5,
+     16.0
+    ],
+    "pivot_norm": [
+     -0.0774,
+     0.0955
+    ],
+    "anchor_uv": [
+     0.59082,
+     0.58594
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": -2.0,
+     "cycles_per_loop": 1,
+     "phase_rad": 1.6
+    },
+    "carries_sockets": []
+   },
+   {
+    "name": "tail_skirt_L",
+    "kind": "sprite",
+    "file": "ships/kvissae_flagship/parts/tail_skirt_L.webp",
+    "file_192": "ships/kvissae_flagship/parts_192/tail_skirt_L.webp",
+    "size_px": [
+     84,
+     168
+    ],
+    "pivot_px": [
+     90.0,
+     16.0
+    ],
+    "pivot_norm": [
+     1.0714,
+     0.0955
+    ],
+    "anchor_uv": [
+     0.4082,
+     0.58594
+    ],
+    "layer": "under",
+    "rest_angle_deg": 0.0,
+    "motion": {
+     "type": "sin",
+     "amp_deg": 2.0,
+     "cycles_per_loop": 1,
+     "phase_rad": 1.6
+    },
+    "carries_sockets": []
+   }
+  ],
+  "glints": [
+   {
+    "u": 0.49947,
+    "v": 0.92555,
+    "size": 0.03125
+   },
+   {
+    "u": 0.397,
+    "v": 0.87364,
+    "size": 0.02674
+   },
+   {
+    "u": 0.4427,
+    "v": 0.90317,
+    "size": 0.02652
+   },
+   {
+    "u": 0.60267,
+    "v": 0.87422,
+    "size": 0.02638
+   },
+   {
+    "u": 0.55679,
+    "v": 0.90077,
+    "size": 0.02467
+   },
+   {
+    "u": 0.49902,
+    "v": 0.09521,
+    "size": 0.02167
+   },
+   {
+    "u": 0.49902,
+    "v": 0.2373,
+    "size": 0.01977
+   },
+   {
+    "u": 0.4229,
+    "v": 0.75381,
+    "size": 0.01965
+   }
+  ]
+ }
+}
